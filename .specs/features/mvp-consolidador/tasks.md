@@ -13,7 +13,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Fonte de produto**: PDF *Consolidador B3 - Projeto e MVP* + `AGENTS.md`
 **Design**: ainda não há `design.md`; os caminhos seguem hexagonal + schema do PDF
 **Spec**: ainda não há `spec.md` confirmada; IDs `MVP-NN` são o catálogo provisório
-**Status**: Draft
+**Status**: T1 concluída e validada; T2–T7 pendentes
 
 ---
 
@@ -122,6 +122,9 @@ T7
 
 ### T1: Create shared kernel
 
+**Status**: ✅ Concluída
+**Validation**: `npm run build && npm test` → sucesso; 2 arquivos de teste, 10 testes aprovados.
+
 **What**: Entregar a plataforma e o contrato que todos os workstreams importam: tooling Node/TS/Vitest/Postgres local, `Money`, tipos de evento, e ports de aplicação + DTOs `PositionSnapshot` e `SalePnL`.
 **Where**: `src/domain/`
 **Depends on**: None
@@ -144,12 +147,12 @@ T7
 
 **Done when**:
 
-- [ ] `package.json`, `tsconfig.json`, `vitest.config.ts`, `.gitignore`, `docker-compose.yml` existem
-- [ ] Scripts `build`, `test`, `test:integration` existem
-- [ ] Tipos e ports compilam; domínio não importa infra
-- [ ] Testes de `Money` e de ordenação de eventos passam
-- [ ] Gate check passes: `npm run build && npm test`
-- [ ] Test count: 10 tests pass (no silent deletions)
+- [x] `package.json`, `tsconfig.json`, `vitest.config.ts`, `.gitignore`, `docker-compose.yml` existem
+- [x] Scripts `build`, `test`, `test:integration` existem
+- [x] Tipos e ports compilam; domínio não importa infra
+- [x] Testes de `Money` e de ordenação de eventos passam
+- [x] Gate check passes: `npm run build && npm test`
+- [x] Test count: 10 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: build
