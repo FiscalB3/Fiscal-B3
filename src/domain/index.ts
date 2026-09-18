@@ -10,3 +10,5 @@ export type { PositionEngine } from "./position/PositionEngine";
 export { PositionEngineImpl } from "./position/PositionEngineImpl";
 export type { PositionSnapshot } from "./position/PositionSnapshot";
 export type { SalePnL, TradeModality } from "./tax/SalePnL";
+export { TaxEngine } from "./tax/TaxEngine";
+export type { AnnualIncomeLine, AnnualTaxDeclaration, MonthlyTaxApuration } from "./tax/TaxEngine";
