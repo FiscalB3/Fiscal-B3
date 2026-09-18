@@ -13,7 +13,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Fonte de produto**: PDF *Consolidador B3 - Projeto e MVP* + `AGENTS.md`
 **Design**: ainda não há `design.md`; os caminhos seguem hexagonal + schema do PDF
 **Spec**: ainda não há `spec.md` confirmada; IDs `MVP-NN` são o catálogo provisório
-**Status**: T1 concluída e validada; T2–T7 pendentes
+**Status**: T1–T3 concluídas; T4–T7 pendentes
 
 ---
 
@@ -194,6 +194,9 @@ T7
 
 ### T3: Build tax engine
 
+**Status**: ✅ Concluída
+**Validation**: `npm test` → sucesso; 4 arquivos de teste, 27 testes aprovados.
+
 **What**: Implementar apuração: day vs swing, compensação só na mesma modalidade, isenção R$ 20.000, DARF mensal, declaração anual (Bens e Direitos + Rendimentos).
 **Where**: `src/domain/tax/`
 **Depends on**: T1
@@ -209,13 +212,13 @@ T7
 
 **Done when**:
 
-- [ ] Day trade e swing em buckets separados
-- [ ] Prejuízo day não reduz lucro swing
-- [ ] Isenção só ação swing à vista com vendas ≤ 20000; FII e day trade sem isenção
-- [ ] Alíquotas: swing ações 15%, day trade 20%, FII 20% (assumidas)
-- [ ] Declaração anual: posição 31/12 + proventos + ganhos do ano
-- [ ] Gate check passes: `npm test`
-- [ ] Test count: 22 tests pass (no silent deletions)
+- [x] Day trade e swing em buckets separados
+- [x] Prejuízo day não reduz lucro swing
+- [x] Isenção só ação swing à vista com vendas ≤ 20000; FII e day trade sem isenção
+- [x] Alíquotas: swing ações 15%, day trade 20%, FII 20% (assumidas)
+- [x] Declaração anual: posição 31/12 + proventos + ganhos do ano
+- [x] Gate check passes: `npm test`
+- [x] Test count: 27 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
