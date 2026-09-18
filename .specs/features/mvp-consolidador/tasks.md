@@ -163,6 +163,9 @@ T7
 
 ### T2: Build position engine
 
+**Status**: ✅ Concluída
+**Validation**: `npm run build && npm test` → sucesso; 3 arquivos de teste, 18 testes aprovados. Sensor de discriminação matou o mutante de desdobramento.
+
 **What**: Implementar o motor de posição: compra ponderada, venda sem alterar preço médio, desdobramento/grupamento, replay multi-ativo e entrada fora de ordem.
 **Where**: `src/domain/position/`
 **Depends on**: T1
@@ -178,11 +181,11 @@ T7
 
 **Done when**:
 
-- [ ] Implementa `PositionEngine` do kernel
-- [ ] Múltiplas compras, venda parcial/total, split, dois tickers, lista embaralhada cobertos
-- [ ] Venda acima da posição rejeitada; provento não mexe quantidade/preço médio
-- [ ] Gate check passes: `npm test`
-- [ ] Test count: 18 tests pass (no silent deletions)
+- [x] Implementa `PositionEngine` do kernel
+- [x] Múltiplas compras, venda parcial/total, split, dois tickers, lista embaralhada cobertos
+- [x] Venda acima da posição rejeitada; provento não mexe quantidade/preço médio
+- [x] Gate check passes: `npm test`
+- [x] Test count: 18 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
