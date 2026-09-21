@@ -17,7 +17,9 @@ function mockApi(overrides: Partial<ApiClient> = {}): ApiClient {
 describe("Web UI", () => {
   it("shows empty portfolio state", async () => {
     render(<App api={mockApi({ getPortfolio: vi.fn().mockResolvedValue([]) })} />);
-    expect(await screen.findByRole("status")).toHaveTextContent("Nenhuma posição encontrada");
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Você ainda não possui posições. Importe suas operações para começar.",
+    );
   });
 
   it("shows portfolio success with ticker", async () => {
@@ -35,7 +37,7 @@ describe("Web UI", () => {
         })}
       />,
     );
-    expect(await screen.findByText("PETR4")).toBeInTheDocument();
+    expect((await screen.findAllByText("PETR4")).length).toBeGreaterThan(0);
     expect(screen.getByText("100")).toBeInTheDocument();
   });
 
@@ -43,7 +45,9 @@ describe("Web UI", () => {
     render(
       <App api={mockApi({ getPortfolio: vi.fn().mockRejectedValue(new Error("Failed to load portfolio")) })} />,
     );
-    expect(await screen.findByRole("alert")).toHaveTextContent("Failed to load portfolio");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Não foi possível carregar sua carteira. Tente novamente em instantes.",
+    );
   });
 
   it("shows upload success", async () => {
@@ -54,7 +58,7 @@ describe("Web UI", () => {
     await user.upload(screen.getByLabelText("Arquivo"), file);
     await user.click(screen.getByRole("button", { name: "Enviar" }));
     await waitFor(() => {
-      expect(screen.getByRole("status")).toHaveTextContent("Importação concluída");
+      expect(screen.getByRole("status")).toHaveTextContent("Suas operações foram importadas com sucesso.");
     });
   });
 

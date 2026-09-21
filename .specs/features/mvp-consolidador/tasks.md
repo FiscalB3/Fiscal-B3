@@ -287,7 +287,7 @@ T7
 ### T6: Build HTTP API and web UI
 
 **Status**: ✅ Concluída
-**Validation**: `npm test && npm run test:integration` → sucesso; 5 unit UI + 11 integration HTTP (16 da T6). Domínio permanece sem HTTP/UI (`MVP-14`). UI segue `DESIGN.md` (Mintlify).
+**Validation**: `npm test && npm run test:integration` → sucesso; 5 unit UI + 11 integration HTTP (16 da T6). Domínio permanece sem HTTP/UI (`MVP-14`). UI inspira-se em neobancos (Nubank/PicPay); `DESIGN.md` documenta o visual.
 
 **What**: Adapter HTTP e telas (upload, posição, mensal, declaração) contra as ports do kernel, com implementação mockada.
 **Where**: `src/interface/`
@@ -370,7 +370,7 @@ No Execute com um agente só: T1, depois T2…T6 em qualquer ordem, depois T7. C
 | --------------------- | -------------- | --------- | ---------- |
 | Linguagem | TypeScript (`AGENTS.md`) | Stack do repo, não Python do PDF | n |
 | HTTP | Express | Adapter fino | n |
-| UI | Vite + React + Mintlify (`DESIGN.md`) | Frontend no mesmo repo | y |
+| UI | Vite + React + neobank BR (`DESIGN.md`) | Frontend no mesmo repo | y |
 | Testes | Vitest | Unit no domínio; integration em Postgres/HTTP | n |
 | Alíquotas | Swing 15%, day 20%, FII 20% | PDF não cita percentual | n |
 | Ouro / auth / PDF | Fora | Escopo do MVP | n |

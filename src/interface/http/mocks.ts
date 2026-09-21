@@ -6,18 +6,32 @@ import { Money } from "../../domain/money/Money";
 import type { PositionSnapshot } from "../../domain/position/PositionSnapshot";
 import type { AppPorts } from "./createApp";
 
-const samplePosition: PositionSnapshot = {
-  ticker: "PETR4",
-  quantity: 100,
-  averagePrice: Money.fromReais("28.50"),
-  acquisitionCost: Money.fromReais("2850.00"),
-};
+const samplePortfolio: readonly PositionSnapshot[] = [
+  {
+    ticker: "PETR4",
+    quantity: 100,
+    averagePrice: Money.fromReais("28.50"),
+    acquisitionCost: Money.fromReais("2850.00"),
+  },
+  {
+    ticker: "VALE3",
+    quantity: 40,
+    averagePrice: Money.fromReais("62.10"),
+    acquisitionCost: Money.fromReais("2484.00"),
+  },
+  {
+    ticker: "HGLG11",
+    quantity: 15,
+    averagePrice: Money.fromReais("160.00"),
+    acquisitionCost: Money.fromReais("2400.00"),
+  },
+];
 
 export function createMockPorts(options?: {
   portfolio?: readonly PositionSnapshot[];
   importOk?: boolean;
 }): AppPorts {
-  const portfolio = options?.portfolio ?? [samplePosition];
+  const portfolio = options?.portfolio ?? samplePortfolio;
   const importOk = options?.importOk ?? true;
 
   const importOperations: ImportOperations = {
@@ -51,7 +65,11 @@ export function createMockPorts(options?: {
       return {
         year,
         bensEDireitos: portfolio,
-        rendimentos: [{ kind: "DIVIDENDO", amount: Money.fromReais("100.00") }],
+        rendimentos: [
+          { kind: "DIVIDENDO", amount: Money.fromReais("100.00") },
+          { kind: "JCP", amount: Money.fromReais("45.00") },
+          { kind: "RENDIMENTO_FII", amount: Money.fromReais("180.00") },
+        ],
       };
     },
   };

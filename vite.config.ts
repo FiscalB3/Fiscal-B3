@@ -6,11 +6,11 @@ export default defineConfig({
   root: "src/interface/web",
   server: {
     proxy: {
-      "/health": "http://localhost:3000",
-      "/portfolio": "http://localhost:3000",
-      "/apuration": "http://localhost:3000",
-      "/declaration": "http://localhost:3000",
-      "/imports": "http://localhost:3000",
+      "/health": "http://127.0.0.1:3001",
+      "/portfolio": "http://127.0.0.1:3001",
+      "/apuration": "http://127.0.0.1:3001",
+      "/declaration": "http://127.0.0.1:3001",
+      "/imports": "http://127.0.0.1:3001",
     },
   },
   build: {

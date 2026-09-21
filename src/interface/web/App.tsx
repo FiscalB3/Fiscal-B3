@@ -7,6 +7,7 @@ import {
   type MonthlyApurationJson,
   type PositionJson,
 } from "./api";
+import { AllocationChart, CompareBars, IncomeBars } from "./charts";
 import "./styles.css";
 
 type Tab = "upload" | "portfolio" | "apuration" | "declaration";
@@ -23,7 +24,15 @@ export type AppProps = {
   initialTab?: Tab;
 };
 
-export function App({ api = createApiClient(), initialTab = "portfolio" }: AppProps) {
+const NAV: Array<{ id: Tab; label: string }> = [
+  { id: "upload", label: "Importar" },
+  { id: "portfolio", label: "Carteira" },
+  { id: "apuration", label: "Apuração" },
+  { id: "declaration", label: "Declaração" },
+];
+
+export function App({ api: apiProp, initialTab = "portfolio" }: AppProps) {
+  const [api] = useState(() => apiProp ?? createApiClient());
   const [tab, setTab] = useState<Tab>(initialTab);
   const [portfolio, setPortfolio] = useState<LoadState<PositionJson[]>>({ status: "idle" });
   const [apuration, setApuration] = useState<LoadState<MonthlyApurationJson>>({ status: "idle" });
@@ -31,6 +40,9 @@ export function App({ api = createApiClient(), initialTab = "portfolio" }: AppPr
   const [upload, setUpload] = useState<LoadState<string>>({ status: "idle" });
   const [month, setMonth] = useState("2024-03");
   const [year, setYear] = useState("2024");
+  const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
 
   useEffect(() => {
     if (tab !== "portfolio") return;
@@ -46,7 +58,7 @@ export function App({ api = createApiClient(), initialTab = "portfolio" }: AppPr
         if (cancelled) return;
         setPortfolio({
           status: "error",
-          message: error instanceof Error ? error.message : "Failed to load portfolio",
+          message: "Não foi possível carregar sua carteira. Tente novamente em instantes.",
         });
       });
     return () => {
@@ -60,7 +72,7 @@ export function App({ api = createApiClient(), initialTab = "portfolio" }: AppPr
     const input = form.elements.namedItem("file") as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) {
-      setUpload({ status: "error", message: "Selecione um arquivo CSV ou XLSX" });
+      setUpload({ status: "error", message: "Escolha um arquivo CSV ou XLSX para continuar." });
       return;
     }
     setUpload({ status: "loading" });
@@ -73,11 +85,11 @@ export function App({ api = createApiClient(), initialTab = "portfolio" }: AppPr
         });
         return;
       }
-      setUpload({ status: "success", data: "Importação concluída" });
-    } catch (error: unknown) {
+      setUpload({ status: "success", data: "Suas operações foram importadas com sucesso." });
+    } catch {
       setUpload({
         status: "error",
-        message: error instanceof Error ? error.message : "Falha na importação",
+        message: "Não foi possível importar o arquivo. Verifique o formato e tente de novo.",
       });
     }
   }
@@ -88,10 +100,10 @@ export function App({ api = createApiClient(), initialTab = "portfolio" }: AppPr
     try {
       const data = await api.getApuration(month);
       setApuration({ status: "success", data });
-    } catch (error: unknown) {
+    } catch {
       setApuration({
         status: "error",
-        message: error instanceof Error ? error.message : "Falha ao carregar apuração",
+        message: "Não foi possível carregar a apuração deste mês. Tente novamente.",
       });
     }
   }
@@ -102,204 +114,282 @@ export function App({ api = createApiClient(), initialTab = "portfolio" }: AppPr
     try {
       const data = await api.getDeclaration(Number.parseInt(year, 10));
       setDeclaration({ status: "success", data });
-    } catch (error: unknown) {
+    } catch {
       setDeclaration({
         status: "error",
-        message: error instanceof Error ? error.message : "Falha ao carregar declaração",
+        message: "Não foi possível carregar a declaração deste ano. Tente novamente.",
       });
     }
   }
 
+  const portfolioTotal =
+    portfolio.status === "success"
+      ? portfolio.data.reduce((sum, row) => sum + row.acquisitionCost.cents, 0)
+      : 0;
+
   return (
     <div className="app">
-      <header className="hero">
-        <p className="brand">Fiscal B3</p>
-        <h1>Consolidador de investimentos</h1>
-        <p>Importe operações, consulte posição, apuração mensal e declaração anual.</p>
-      </header>
-      <div className="layout">
+      <header className="topbar">
+        <div className="brand-lockup">
+          <img className="brand-mark" src="/logo.png" alt="" width={36} height={36} />
+          <div className="brand-text">
+            <p className="brand-name">Fiscal B3</p>
+            <p className="brand-tag">Organização fiscal</p>
+          </div>
+        </div>
         <nav className="nav" aria-label="Seções">
-          <button type="button" aria-current={tab === "upload" ? "page" : undefined} onClick={() => setTab("upload")}>
-            Upload
-          </button>
-          <button
-            type="button"
-            aria-current={tab === "portfolio" ? "page" : undefined}
-            onClick={() => setTab("portfolio")}
-          >
-            Posição
-          </button>
-          <button
-            type="button"
-            aria-current={tab === "apuration" ? "page" : undefined}
-            onClick={() => setTab("apuration")}
-          >
-            Mensal
-          </button>
-          <button
-            type="button"
-            aria-current={tab === "declaration" ? "page" : undefined}
-            onClick={() => setTab("declaration")}
-          >
-            Declaração
-          </button>
+          {NAV.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              aria-current={tab === item.id ? "page" : undefined}
+              onClick={() => setTab(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
         </nav>
-        <main className="main">
-          {tab === "upload" && (
-            <section>
-              <h2 className="section-title">Importar operações</h2>
-              <p className="section-lead">Envie um CSV ou XLSX no layout fixo do MVP.</p>
-              <form onSubmit={onUpload}>
+      </header>
+
+      <div className="hero">
+        <h1>Seu patrimônio sob controle</h1>
+        <p>Acompanhe carteira, apuração mensal e declaração anual em um só lugar.</p>
+      </div>
+
+      <main className="main">
+        {tab === "upload" && (
+          <section className="panel">
+            <h2 className="section-title">Importar operações</h2>
+            <p className="section-lead">
+              Envie a planilha da sua corretora em CSV ou XLSX para atualizar suas operações.
+            </p>
+            <form onSubmit={onUpload}>
+              <div
+                className={dragging ? "dropzone is-dragging" : "dropzone"}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDragging(false);
+                  const dropped = event.dataTransfer.files?.[0];
+                  if (!dropped) return;
+                  const input = event.currentTarget.querySelector("input");
+                  if (!input) return;
+                  const transfer = new DataTransfer();
+                  transfer.items.add(dropped);
+                  input.files = transfer.files;
+                  setFileName(dropped.name);
+                }}
+              >
+                <p className="dropzone-title">{dragging ? "Solte o arquivo aqui" : "Planilha da corretora"}</p>
+                <p className="dropzone-hint">{fileName ?? "Arraste o arquivo ou selecione no seu dispositivo"}</p>
                 <div className="field">
                   <label htmlFor="file">Arquivo</label>
-                  <input id="file" name="file" type="file" accept=".csv,.xlsx,.xls,text/csv" />
+                  <input
+                    id="file"
+                    name="file"
+                    type="file"
+                    accept=".csv,.xlsx,.xls,text/csv"
+                    onChange={(event) => setFileName(event.target.files?.[0]?.name ?? null)}
+                  />
                 </div>
-                <button className="btn-accent" type="submit">
-                  Enviar
-                </button>
-              </form>
-              {upload.status === "success" && (
-                <p className="state state-success" role="status">
-                  {upload.data}
-                </p>
-              )}
-              {upload.status === "error" && (
-                <p className="state state-error" role="alert">
-                  {upload.message}
-                </p>
-              )}
-            </section>
-          )}
+              </div>
+              <button className="btn-accent" type="submit">
+                Enviar
+              </button>
+            </form>
+            {upload.status === "success" && (
+              <p className="state state-success" role="status">
+                {upload.data}
+              </p>
+            )}
+            {upload.status === "error" && (
+              <p className="state state-error" role="alert">
+                {upload.message}
+              </p>
+            )}
+          </section>
+        )}
 
-          {tab === "portfolio" && (
-            <section>
-              <h2 className="section-title">Posição atual</h2>
-              <p className="section-lead">Quantidade e preço médio por ativo, vindos da API.</p>
-              {portfolio.status === "empty" && (
-                <p className="state state-empty" role="status">
-                  Nenhuma posição encontrada
-                </p>
-              )}
-              {portfolio.status === "error" && (
-                <p className="state state-error" role="alert">
-                  {portfolio.message}
-                </p>
-              )}
-              {portfolio.status === "success" && (
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Ticker</th>
-                      <th>Quantidade</th>
-                      <th>Preço médio</th>
-                      <th>Custo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {portfolio.data.map((row) => (
-                      <tr key={row.ticker}>
-                        <td>{row.ticker}</td>
-                        <td>{row.quantity}</td>
-                        <td>{formatCents(row.averagePrice.cents)}</td>
-                        <td>{formatCents(row.acquisitionCost.cents)}</td>
+        {tab === "portfolio" && (
+          <section className="panel">
+            <h2 className="section-title">Sua carteira</h2>
+            <p className="section-lead">
+              Veja quantidade, preço médio e custo de aquisição de cada ativo.
+            </p>
+            {portfolio.status === "success" && (
+              <div className="balance">
+                <span className="balance-label">Custo total investido</span>
+                <span className="balance-value">{formatCents(portfolioTotal)}</span>
+              </div>
+            )}
+            {portfolio.status === "empty" && (
+              <p className="state state-empty" role="status">
+                Você ainda não possui posições. Importe suas operações para começar.
+              </p>
+            )}
+            {portfolio.status === "error" && (
+              <p className="state state-error" role="alert">
+                {portfolio.message}
+              </p>
+            )}
+            {portfolio.status === "success" && (
+              <div className="split">
+                <AllocationChart
+                  rows={portfolio.data}
+                  selected={selectedTicker}
+                  onSelect={(ticker) => setSelectedTicker((current) => (current === ticker ? null : ticker))}
+                />
+                <div className="table-wrap">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Ticker</th>
+                        <th>Quantidade</th>
+                        <th>Preço médio</th>
+                        <th>Custo</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </section>
-          )}
-
-          {tab === "apuration" && (
-            <section>
-              <h2 className="section-title">Apuração mensal</h2>
-              <p className="section-lead">Consulta o resultado e o DARF do mês via API.</p>
-              <form onSubmit={onLoadApuration} className="stack">
-                <div className="field">
-                  <label htmlFor="month">Mês</label>
-                  <input id="month" value={month} onChange={(e) => setMonth(e.target.value)} placeholder="YYYY-MM" />
-                </div>
-                <button className="btn-primary" type="submit">
-                  Consultar
-                </button>
-              </form>
-              {apuration.status === "error" && (
-                <p className="state state-error" role="alert">
-                  {apuration.message}
-                </p>
-              )}
-              {apuration.status === "success" && (
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Mês</th>
-                      <th>Resultado</th>
-                      <th>Isenção</th>
-                      <th>DARF</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>{apuration.data.month}</td>
-                      <td>{formatCents(apuration.data.result.cents)}</td>
-                      <td>{formatCents(apuration.data.exemptionApplied.cents)}</td>
-                      <td>{formatCents(apuration.data.darf.cents)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              )}
-            </section>
-          )}
-
-          {tab === "declaration" && (
-            <section>
-              <h2 className="section-title">Declaração anual</h2>
-              <p className="section-lead">Bens e direitos e rendimentos do ano-calendário.</p>
-              <form onSubmit={onLoadDeclaration} className="stack">
-                <div className="field">
-                  <label htmlFor="year">Ano</label>
-                  <input id="year" value={year} onChange={(e) => setYear(e.target.value)} />
-                </div>
-                <button className="btn-primary" type="submit">
-                  Consultar
-                </button>
-              </form>
-              {declaration.status === "error" && (
-                <p className="state state-error" role="alert">
-                  {declaration.message}
-                </p>
-              )}
-              {declaration.status === "success" && (
-                <>
-                  <h3 className="section-title">Bens e direitos</h3>
-                  {declaration.data.bensEDireitos.length === 0 ? (
-                    <p className="state state-empty">Nenhum bem registrado</p>
-                  ) : (
-                    <table className="table">
-                      <thead>
-                        <tr>
-                          <th>Ticker</th>
-                          <th>Quantidade</th>
-                          <th>Custo</th>
+                    </thead>
+                    <tbody>
+                      {portfolio.data.map((row) => (
+                        <tr
+                          key={row.ticker}
+                          className={selectedTicker === row.ticker ? "is-selected" : undefined}
+                          onClick={() =>
+                            setSelectedTicker((current) => (current === row.ticker ? null : row.ticker))
+                          }
+                        >
+                          <td>
+                            <span className="ticker">{row.ticker}</span>
+                          </td>
+                          <td>{row.quantity}</td>
+                          <td>{formatCents(row.averagePrice.cents)}</td>
+                          <td className="money">{formatCents(row.acquisitionCost.cents)}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {declaration.data.bensEDireitos.map((row) => (
-                          <tr key={row.ticker}>
-                            <td>{row.ticker}</td>
-                            <td>{row.quantity}</td>
-                            <td>{formatCents(row.acquisitionCost.cents)}</td>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {tab === "apuration" && (
+          <section className="panel">
+            <h2 className="section-title">Apuração mensal</h2>
+            <p className="section-lead">
+              Confira o resultado do mês, a isenção aplicada e o valor estimado de DARF.
+            </p>
+            <form onSubmit={onLoadApuration} className="stack">
+              <div className="field">
+                <label htmlFor="month">Mês de referência</label>
+                <input id="month" value={month} onChange={(e) => setMonth(e.target.value)} placeholder="AAAA-MM" />
+              </div>
+              <button className="btn-primary" type="submit">
+                Ver apuração
+              </button>
+            </form>
+            {apuration.status === "error" && (
+              <p className="state state-error" role="alert">
+                {apuration.message}
+              </p>
+            )}
+            {apuration.status === "success" && (
+              <>
+                <div className="balance">
+                  <span className="balance-label">DARF estimado</span>
+                  <span className="balance-value">{formatCents(apuration.data.darf.cents)}</span>
+                </div>
+                <CompareBars
+                  items={[
+                    { label: "Resultado", cents: apuration.data.result.cents, tone: "money" },
+                    { label: "Isenção", cents: apuration.data.exemptionApplied.cents, tone: "muted" },
+                    { label: "DARF", cents: apuration.data.darf.cents, tone: "brand" },
+                  ]}
+                />
+              </>
+            )}
+          </section>
+        )}
+
+        {tab === "declaration" && (
+          <section className="panel">
+            <h2 className="section-title">Declaração anual</h2>
+            <p className="section-lead">
+              Organize bens e direitos e os rendimentos do ano para a sua declaração.
+            </p>
+            <form onSubmit={onLoadDeclaration} className="stack">
+              <div className="field">
+                <label htmlFor="year">Ano-calendário</label>
+                <input id="year" value={year} onChange={(e) => setYear(e.target.value)} />
+              </div>
+              <button className="btn-primary" type="submit">
+                Ver declaração
+              </button>
+            </form>
+            {declaration.status === "error" && (
+              <p className="state state-error" role="alert">
+                {declaration.message}
+              </p>
+            )}
+            {declaration.status === "success" && (
+              <>
+                <h3 className="section-title" style={{ marginTop: "1.25rem" }}>
+                  Bens e direitos
+                </h3>
+                {declaration.data.bensEDireitos.length === 0 ? (
+                  <p className="state state-empty">Nenhum bem declarado neste ano.</p>
+                ) : (
+                  <div className="split">
+                    <AllocationChart
+                      rows={declaration.data.bensEDireitos}
+                      selected={selectedTicker}
+                      onSelect={(ticker) => setSelectedTicker((current) => (current === ticker ? null : ticker))}
+                    />
+                    <div className="table-wrap">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            <th>Ticker</th>
+                            <th>Quantidade</th>
+                            <th>Custo</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </>
-              )}
-            </section>
-          )}
-        </main>
-      </div>
+                        </thead>
+                        <tbody>
+                          {declaration.data.bensEDireitos.map((row) => (
+                            <tr
+                              key={row.ticker}
+                              className={selectedTicker === row.ticker ? "is-selected" : undefined}
+                              onClick={() =>
+                                setSelectedTicker((current) => (current === row.ticker ? null : row.ticker))
+                              }
+                            >
+                              <td>
+                                <span className="ticker">{row.ticker}</span>
+                              </td>
+                              <td>{row.quantity}</td>
+                              <td className="money">{formatCents(row.acquisitionCost.cents)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+                {declaration.data.rendimentos.length > 0 && (
+                  <div className="chart-block">
+                    <IncomeBars lines={declaration.data.rendimentos} />
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+        )}
+      </main>
     </div>
   );
 }

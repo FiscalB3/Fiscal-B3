@@ -22,6 +22,18 @@ describe("HTTP API", () => {
         averagePrice: { cents: 2850 },
         acquisitionCost: { cents: 285000 },
       },
+      {
+        ticker: "VALE3",
+        quantity: 40,
+        averagePrice: { cents: 6210 },
+        acquisitionCost: { cents: 248400 },
+      },
+      {
+        ticker: "HGLG11",
+        quantity: 15,
+        averagePrice: { cents: 16000 },
+        acquisitionCost: { cents: 240000 },
+      },
     ]);
   });
 
@@ -56,7 +68,7 @@ describe("HTTP API", () => {
     const res = await request(app).get("/declaration").query({ year: "2024" });
     expect(res.status).toBe(200);
     expect(res.body.year).toBe(2024);
-    expect(res.body.bensEDireitos).toHaveLength(1);
+    expect(res.body.bensEDireitos).toHaveLength(3);
     expect(res.body.rendimentos[0]).toEqual({
       kind: "DIVIDENDO",
       amount: { cents: 10000 },
