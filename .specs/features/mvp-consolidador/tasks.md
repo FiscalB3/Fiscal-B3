@@ -13,7 +13,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Fonte de produto**: PDF *Consolidador B3 - Projeto e MVP* + `AGENTS.md`
 **Design**: ainda não há `design.md`; os caminhos seguem hexagonal + schema do PDF
 **Spec**: ainda não há `spec.md` confirmada; IDs `MVP-NN` são o catálogo provisório
-**Status**: T1–T4 concluídas; T5–T7 pendentes
+**Status**: T1–T4 e T6 concluídas; T5, T7 pendentes
 
 ---
 
@@ -286,6 +286,9 @@ T7
 
 ### T6: Build HTTP API and web UI
 
+**Status**: ✅ Concluída
+**Validation**: `npm test && npm run test:integration` → sucesso; 5 unit UI + 11 integration HTTP (16 da T6). Domínio permanece sem HTTP/UI (`MVP-14`). UI segue `DESIGN.md` (Mintlify).
+
 **What**: Adapter HTTP e telas (upload, posição, mensal, declaração) contra as ports do kernel, com implementação mockada.
 **Where**: `src/interface/`
 **Depends on**: T1
@@ -301,11 +304,11 @@ T7
 
 **Done when**:
 
-- [ ] `POST /imports`, `GET /portfolio`, `GET /apuration?month=`, `GET /declaration?year=`, `GET /health`
-- [ ] 400/415 nos erros de input; UI mostra vazio, sucesso e erro
-- [ ] Componentes não calculam preço médio nem DARF
-- [ ] Gate check passes: `npm test && npm run test:integration`
-- [ ] Test count: 16 tests pass (no silent deletions)
+- [x] `POST /imports`, `GET /portfolio`, `GET /apuration?month=`, `GET /declaration?year=`, `GET /health`
+- [x] 400/415 nos erros de input; UI mostra vazio, sucesso e erro
+- [x] Componentes não calculam preço médio nem DARF
+- [x] Gate check passes: `npm test && npm run test:integration`
+- [x] Test count: 16 tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full
@@ -367,7 +370,7 @@ No Execute com um agente só: T1, depois T2…T6 em qualquer ordem, depois T7. C
 | --------------------- | -------------- | --------- | ---------- |
 | Linguagem | TypeScript (`AGENTS.md`) | Stack do repo, não Python do PDF | n |
 | HTTP | Express | Adapter fino | n |
-| UI | Vite + React | Frontend no mesmo repo | n |
+| UI | Vite + React + Mintlify (`DESIGN.md`) | Frontend no mesmo repo | y |
 | Testes | Vitest | Unit no domínio; integration em Postgres/HTTP | n |
 | Alíquotas | Swing 15%, day 20%, FII 20% | PDF não cita percentual | n |
 | Ouro / auth / PDF | Fora | Escopo do MVP | n |
