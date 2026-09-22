@@ -13,7 +13,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Fonte de produto**: PDF *Consolidador B3 - Projeto e MVP* + `AGENTS.md`
 **Design**: ainda não há `design.md`; os caminhos seguem hexagonal + schema do PDF
 **Spec**: ainda não há `spec.md` confirmada; IDs `MVP-NN` são o catálogo provisório
-**Status**: T1–T3 concluídas; T4–T7 pendentes
+**Status**: T1–T4 concluídas; T5–T7 pendentes
 
 ---
 
@@ -227,6 +227,9 @@ T7
 
 ### T4: Build spreadsheet import
 
+**Status**: ✅ Concluída
+**Validation**: `npm run build && npm test` → sucesso; 5 arquivos de teste, 46 testes aprovados (19 novos para T4).
+
 **What**: Definir layout fixo e importar CSV/XLSX para `PortfolioEvent[]`, com erros por linha.
 **Where**: `src/infrastructure/import/`
 **Depends on**: T1
@@ -242,11 +245,11 @@ T7
 
 **Done when**:
 
-- [ ] Layout único para operação, evento corporativo e provento
-- [ ] CSV e XLSX equivalentes no mesmo conteúdo
-- [ ] Cabeçalho errado e linha inválida devolvem erro explícito por linha
-- [ ] Gate check passes: `npm test`
-- [ ] Test count: 14 tests pass (no silent deletions)
+- [x] Layout único para operação, evento corporativo e provento
+- [x] CSV e XLSX equivalentes no mesmo conteúdo
+- [x] Cabeçalho errado e linha inválida devolvem erro explícito por linha
+- [x] Gate check passes: `npm test`
+- [x] Test count: 19 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
@@ -378,13 +381,13 @@ Granularidade pedida: **módulo / workstream**, não uma função por tarefa.
 
 | Task | Scope | Status |
 | ---- | ----- | ------ |
-| T1 | Kernel (tooling + tipos + ports) | Módulo único, bloqueia o resto |
-| T2 | Motor de posição | Workstream independente |
-| T3 | Motor fiscal | Workstream independente |
-| T4 | Importação | Workstream independente |
-| T5 | Persistência | Workstream independente |
-| T6 | API + UI | Workstream independente |
-| T7 | Wiring | Junta os cinco |
+| T1 | Kernel (tooling + tipos + ports) | ✅ Concluída |
+| T2 | Motor de posição | ✅ Concluída |
+| T3 | Motor fiscal | ✅ Concluída |
+| T4 | Importação | ✅ Concluída |
+| T5 | Persistência | Pendente |
+| T6 | API + UI | Pendente |
+| T7 | Wiring | Pendente |
 
 ---
 
