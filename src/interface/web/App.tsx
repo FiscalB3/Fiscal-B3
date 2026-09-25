@@ -76,6 +76,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
   const [darfReload, setDarfReload] = useState(0);
   const [lossesReload, setLossesReload] = useState(0);
   const [assetHistory, setAssetHistory] = useState<LoadState<TimelineEventJson[]>>({ status: "idle" });
+  const [tickerFilter, setTickerFilter] = useState("");
 
   useEffect(() => {
     if (tab !== "portfolio" || !selectedTicker) {
@@ -311,9 +312,16 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
       ? portfolio.data.reduce((sum, row) => sum + row.acquisitionCost.cents, 0)
       : 0;
 
+  const filteredPortfolio =
+    portfolio.status === "success"
+      ? portfolio.data.filter((row) =>
+          row.ticker.toUpperCase().includes(tickerFilter.trim().toUpperCase()),
+        )
+      : [];
+
   return (
-    <div className="app">
-      <header className="topbar">
+    <div className="app print-root">
+      <header className="topbar no-print">
         <div className="brand-lockup">
           <img className="brand-mark" src="/logo.png" alt="" width={36} height={36} />
           <div className="brand-text">
@@ -663,6 +671,17 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
               Veja quantidade, preço médio e custo de aquisição de cada ativo.
             </p>
             {portfolio.status === "success" && (
+              <div className="field">
+                <label htmlFor="ticker-filter">Filtrar ticker</label>
+                <input
+                  id="ticker-filter"
+                  value={tickerFilter}
+                  onChange={(event) => setTickerFilter(event.target.value)}
+                  placeholder="Ex.: PETR"
+                />
+              </div>
+            )}
+            {portfolio.status === "success" && (
               <div className="balance">
                 <span className="balance-label">Custo total investido</span>
                 <span className="balance-value">{formatCents(portfolioTotal)}</span>
@@ -681,7 +700,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
             {portfolio.status === "success" && (
               <div className="split">
                 <AllocationChart
-                  rows={portfolio.data}
+                  rows={filteredPortfolio}
                   selected={selectedTicker}
                   onSelect={(ticker) => setSelectedTicker((current) => (current === ticker ? null : ticker))}
                 />
@@ -696,7 +715,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {portfolio.data.map((row) => (
+                      {filteredPortfolio.map((row) => (
                         <tr
                           key={row.ticker}
                           className={selectedTicker === row.ticker ? "is-selected" : undefined}
@@ -822,6 +841,15 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
                 Ver declaração
               </button>
             </form>
+            <p className="section-lead">
+              <a
+                className="btn-accent"
+                href={api.getDeclarationCsvUrl(Number.parseInt(year, 10) || 2024)}
+                download={`declaracao-${year}.csv`}
+              >
+                Baixar CSV
+              </a>
+            </p>
             {declaration.status === "error" && (
               <p className="state state-error" role="alert">
                 {declaration.message}

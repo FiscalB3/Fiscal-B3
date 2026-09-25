@@ -46,6 +46,7 @@ function mockApi(overrides: Partial<ApiClient> = {}): ApiClient {
     getLossCarryforward: vi.fn().mockResolvedValue({ points: [] }),
     getApuration: vi.fn(),
     getDeclaration: vi.fn(),
+    getDeclarationCsvUrl: vi.fn((year: number) => `/declaration.csv?year=${year}`),
     importFile: vi.fn(),
     resetDemo: vi.fn().mockResolvedValue({
       ok: true,
@@ -347,5 +348,47 @@ describe("Web UI", () => {
     expect(screen.getByText("Detalhe · PETR4")).toBeInTheDocument();
     expect(screen.getAllByText("R$ 28,50").length).toBeGreaterThan(0);
     expect(screen.getByText(/Compra de 100 PETR4/)).toBeInTheDocument();
+  });
+
+  it("filters portfolio table and chart by ticker", async () => {
+    const user = userEvent.setup();
+    render(
+      <App
+        api={mockApi({
+          getPortfolio: vi.fn().mockResolvedValue([
+            {
+              ticker: "PETR4",
+              quantity: 100,
+              averagePrice: { cents: 2850 },
+              acquisitionCost: { cents: 285000 },
+            },
+            {
+              ticker: "VALE3",
+              quantity: 40,
+              averagePrice: { cents: 6210 },
+              acquisitionCost: { cents: 248400 },
+            },
+          ]),
+        })}
+        initialTab="portfolio"
+      />,
+    );
+    expect((await screen.findAllByText("PETR4")).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("VALE3").length).toBeGreaterThan(0);
+    await user.type(screen.getByLabelText("Filtrar ticker"), "vale");
+    expect(screen.queryByText("PETR4")).not.toBeInTheDocument();
+    expect(screen.getAllByText("VALE3").length).toBeGreaterThan(0);
+  });
+
+  it("shows CSV download link on declaration tab", async () => {
+    render(<App api={mockApi()} initialTab="declaration" />);
+    const link = await screen.findByRole("link", { name: "Baixar CSV" });
+    expect(link).toHaveAttribute("href", "/declaration.csv?year=2024");
+  });
+
+  it("uses print-root class for print-ready layout", () => {
+    const { container } = render(<App api={mockApi()} />);
+    expect(container.querySelector(".print-root")).toBeInTheDocument();
+    expect(container.querySelector(".topbar")).toHaveClass("no-print");
   });
 });

@@ -378,4 +378,23 @@ describe("HTTP API", () => {
     expect(res.body.points.length).toBeGreaterThanOrEqual(3);
     expect(res.body.points[0].dayTrade.cents).not.toBe(res.body.points[0].swing.cents);
   });
+
+  it("GET /declaration.csv returns CSV aligned with declaration JSON", async () => {
+    const app = createApp(createMockPorts());
+    const json = await request(app).get("/declaration").query({ year: "2024" });
+    const csv = await request(app).get("/declaration.csv").query({ year: "2024" });
+    expect(csv.status).toBe(200);
+    expect(csv.headers["content-type"]).toMatch(/text\/csv/);
+    expect(csv.text).toContain("section,ticker_or_kind,quantity,amount_cents");
+    expect(csv.text).toContain("bens,PETR4,100,285000");
+    expect(csv.text).toContain("rendimentos,DIVIDENDO,,10000");
+    expect(json.body.bensEDireitos[0].ticker).toBe("PETR4");
+    expect(json.body.rendimentos[0].kind).toBe("DIVIDENDO");
+  });
+
+  it("GET /declaration.csv without year returns 400", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).get("/declaration.csv");
+    expect(res.status).toBe(400);
+  });
 });

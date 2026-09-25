@@ -185,6 +185,34 @@ export function createApp(ports: AppPorts): Express {
     }
   });
 
+  app.get("/declaration.csv", async (req, res, next) => {
+    try {
+      const rawYear = typeof req.query.year === "string" ? req.query.year : "";
+      const year = Number.parseInt(rawYear, 10);
+      if (!rawYear || !Number.isInteger(year) || year < 1900 || year > 2100) {
+        res.status(400).json({ error: "Query parameter year is required as a valid year" });
+        return;
+      }
+      const declaration = await ports.getAnnualDeclaration.execute({ year });
+      const lines = ["section,ticker_or_kind,quantity,amount_cents"];
+      for (const row of declaration.bensEDireitos) {
+        lines.push(
+          `bens,${row.ticker},${row.quantity},${row.acquisitionCost.toCents()}`,
+        );
+      }
+      for (const row of declaration.rendimentos) {
+        lines.push(`rendimentos,${row.kind},,${row.amount.toCents()}`);
+      }
+      res
+        .status(200)
+        .type("text/csv")
+        .set("Content-Disposition", `attachment; filename="declaracao-${year}.csv"`)
+        .send(`${lines.join("\n")}\n`);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/imports", upload.single("file"), async (req: Request, res: Response, next) => {
     try {
       const file = req.file;

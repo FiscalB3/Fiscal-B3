@@ -85,6 +85,7 @@ export type ApiClient = {
   getLossCarryforward(year?: number): Promise<LossCarryforwardJson>;
   getApuration(month: string): Promise<MonthlyApurationJson>;
   getDeclaration(year: number): Promise<AnnualDeclarationJson>;
+  getDeclarationCsvUrl(year: number): string;
   importFile(file: File): Promise<{ ok: true } | { ok: false; errors: Array<{ line: number; message: string }> }>;
   resetDemo(): Promise<DemoResetJson>;
 };
@@ -157,6 +158,10 @@ export function createApiClient(baseUrl = ""): ApiClient {
         throw new Error("Failed to load declaration");
       }
       return (await res.json()) as AnnualDeclarationJson;
+    },
+
+    getDeclarationCsvUrl(year: number) {
+      return `${baseUrl}/declaration.csv?year=${encodeURIComponent(String(year))}`;
     },
 
     async importFile(file: File) {

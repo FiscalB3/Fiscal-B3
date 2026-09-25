@@ -407,10 +407,12 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Rota CSV + botão na UI
-- [ ] Conteúdo alinhado à declaração JSON
-- [ ] Gate: full
-- [ ] Test count: ≥6
+- [x] Rota CSV + botão na UI
+- [x] Conteúdo alinhado à declaração JSON
+- [x] Gate: full
+- [x] Test count: ≥6
+
+**Status**: ✅ Concluída
 
 **Tests**: unit + integration  
 **Gate**: full
@@ -426,9 +428,11 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Layout print esconde nav/CTAs
-- [ ] Gate: quick
-- [ ] Test count: ≥4
+- [x] Layout print esconde nav/CTAs
+- [x] Gate: quick
+- [x] Test count: ≥4
+
+**Status**: ✅ Concluída
 
 **Tests**: unit  
 **Gate**: quick
@@ -444,9 +448,11 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Filtro afeta tabela e destaque do gráfico
-- [ ] Gate: quick
-- [ ] Test count: ≥6
+- [x] Filtro afeta tabela e destaque do gráfico
+- [x] Gate: quick
+- [x] Test count: ≥6
+
+**Status**: ✅ Concluída
 
 **Tests**: unit  
 **Gate**: quick
@@ -617,7 +623,11 @@ T6.1 → T6.2 → T6.3 → T6.6 → T6.14 → T6.18 → T6.16 → T6.7 → T6.8 
 | T6.7 | ✅ Day vs swing |
 | T6.8 | ✅ Prejuízos |
 | T6.9 | ✅ Detalhe ativo |
-| T6.10–T6.18 | Planejada (expansão apresentação) |
+| T6.10 | Planejada |
+| T6.11 | ✅ Export CSV |
+| T6.12 | ✅ Print IR |
+| T6.13 | ✅ Filtro ticker |
+| T6.14–T6.18 | Planejada |
 
 ---
 

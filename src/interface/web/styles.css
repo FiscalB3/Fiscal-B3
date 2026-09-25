@@ -758,3 +758,30 @@ body {
     padding-bottom: 0.15rem;
   }
 }
+
+@media print {
+  .no-print,
+  .topbar,
+  .hero,
+  .btn-primary,
+  .btn-accent,
+  .btn-ghost,
+  .dropzone,
+  .nav,
+  .demo-banner {
+    display: none !important;
+  }
+
+  .app {
+    background: white;
+  }
+
+  .panel {
+    box-shadow: none;
+    border: none;
+  }
+
+  .main {
+    padding: 0;
+  }
+}
