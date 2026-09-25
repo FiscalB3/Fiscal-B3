@@ -9,9 +9,8 @@ import type { ResetDemo, ResetDemoResult } from "../../application/ports/ResetDe
 import { Money } from "../../domain/money/Money";
 import type { PositionSnapshot } from "../../domain/position/PositionSnapshot";
 import { darfDueDate } from "../../domain/tax/darfDueDate";
+import { buildExemptionMeter } from "../../domain/tax/exemptionMeter";
 import type { AppPorts } from "./createApp";
-
-const EXEMPTION_LIMIT_CENTS = 2_000_000;
 
 const samplePortfolio: readonly PositionSnapshot[] = [
   {
@@ -274,16 +273,17 @@ export function createMockPorts(options?: {
     async execute({ month }): Promise<DashboardSummary> {
       const apuration = await getMonthlyApuration.execute({ month });
       const used = demoActive ? DEMO_EXEMPTION_USED_CENTS : SAMPLE_EXEMPTION_USED_CENTS;
-      const percent =
-        EXEMPTION_LIMIT_CENTS === 0 ? 0 : Math.round((used / EXEMPTION_LIMIT_CENTS) * 1000) / 10;
+      const meter = buildExemptionMeter(used);
       return {
         month,
         investedCost: sumAcquisitionCost(portfolio),
         assetCount: portfolio.length,
         monthDarf: Money.fromCents(apuration.darf.toCents()),
-        exemptionUsedCents: used,
-        exemptionLimitCents: EXEMPTION_LIMIT_CENTS,
-        exemptionPercentUsed: percent,
+        exemptionUsedCents: meter.usedCents,
+        exemptionLimitCents: meter.limitCents,
+        exemptionPercentUsed: meter.percentUsed,
+        exemptionStatus: meter.status,
+        exemptionRemainingCents: meter.remainingCents,
       };
     },
   };

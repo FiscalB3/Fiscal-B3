@@ -36,6 +36,8 @@ export type DashboardJson = {
   exemptionUsedCents: number;
   exemptionLimitCents: number;
   exemptionPercentUsed: number;
+  exemptionStatus: "ok" | "warning" | "exceeded";
+  exemptionRemainingCents: number;
 };
 
 export type TimelineEventJson = {

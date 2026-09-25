@@ -12,6 +12,8 @@ const sampleDashboard: DashboardJson = {
   exemptionUsedCents: 850000,
   exemptionLimitCents: 2000000,
   exemptionPercentUsed: 42.5,
+  exemptionStatus: "ok",
+  exemptionRemainingCents: 1150000,
 };
 
 function mockApi(overrides: Partial<ApiClient> = {}): ApiClient {
@@ -52,6 +54,7 @@ describe("Web UI", () => {
     expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.getByText("R$ 225,00")).toBeInTheDocument();
     expect(screen.getByText("42.5%")).toBeInTheDocument();
+    expect(screen.getByTestId("exemption-meter")).toHaveClass("is-ok");
   });
 
   it("shows empty dashboard state", async () => {
@@ -172,6 +175,8 @@ describe("Web UI", () => {
         exemptionUsedCents: 1820000,
         exemptionLimitCents: 2000000,
         exemptionPercentUsed: 91,
+        exemptionStatus: "warning",
+        exemptionRemainingCents: 180000,
       });
     render(<App api={mockApi({ resetDemo, getDashboard })} />);
     expect(
@@ -187,6 +192,7 @@ describe("Web UI", () => {
     expect(await screen.findByTestId("dashboard-kpis")).toBeInTheDocument();
     expect(screen.getByText("6")).toBeInTheDocument();
     expect(screen.getByText("91%")).toBeInTheDocument();
+    expect(screen.getByTestId("exemption-meter")).toHaveClass("is-warning");
   });
 
   it("shows timeline events ordered with type ticker and date", async () => {

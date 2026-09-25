@@ -48,5 +48,7 @@ export function serializeDashboard(summary: DashboardSummary) {
     exemptionUsedCents: summary.exemptionUsedCents,
     exemptionLimitCents: summary.exemptionLimitCents,
     exemptionPercentUsed: summary.exemptionPercentUsed,
+    exemptionStatus: summary.exemptionStatus,
+    exemptionRemainingCents: summary.exemptionRemainingCents,
   };
 }

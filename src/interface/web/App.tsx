@@ -330,6 +330,26 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
                     {formatCents(dashboard.data.exemptionUsedCents)} de{" "}
                     {formatCents(dashboard.data.exemptionLimitCents)}
                   </p>
+                  <div
+                    className={`exemption-meter is-${dashboard.data.exemptionStatus}`}
+                    data-testid="exemption-meter"
+                    role="meter"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.min(100, dashboard.data.exemptionPercentUsed)}
+                    aria-label="Uso da isenção mensal de ações swing"
+                  >
+                    <div
+                      className="exemption-meter-fill"
+                      style={{
+                        width: `${Math.min(100, dashboard.data.exemptionPercentUsed)}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="kpi-hint">
+                    Restante: {formatCents(dashboard.data.exemptionRemainingCents)} ·{" "}
+                    {dashboard.data.exemptionStatus}
+                  </p>
                 </article>
               </div>
             )}

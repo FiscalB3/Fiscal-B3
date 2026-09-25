@@ -302,6 +302,29 @@ body {
   font-weight: 600;
 }
 
+.exemption-meter {
+  margin-top: 0.65rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: rgba(11, 79, 108, 0.12);
+  overflow: hidden;
+}
+
+.exemption-meter-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--money);
+  transition: width 400ms ease;
+}
+
+.exemption-meter.is-warning .exemption-meter-fill {
+  background: #d97706;
+}
+
+.exemption-meter.is-exceeded .exemption-meter-fill {
+  background: var(--danger);
+}
+
 .timeline {
   list-style: none;
   margin: 0;

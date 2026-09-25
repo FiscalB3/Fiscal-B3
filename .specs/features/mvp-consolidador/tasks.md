@@ -305,10 +305,12 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Domínio expõe consumo/saldo
-- [ ] FII e day trade fora do medidor
-- [ ] Gate: quick
-- [ ] Test count: ≥8
+- [x] Domínio expõe consumo/saldo
+- [x] FII e day trade fora do medidor
+- [x] Gate: quick
+- [x] Test count: ≥8
+
+**Status**: ✅ Concluída (8 domain + dashboard meter)
 
 **Tests**: unit  
 **Gate**: quick
@@ -605,7 +607,8 @@ T6.1 → T6.2 → T6.3 → T6.6 → T6.14 → T6.18 → T6.16 → T6.7 → T6.8 
 | T6.3 | ✅ Dashboard KPIs |
 | T6.4 | ✅ Timeline |
 | T6.5 | ✅ Calendário DARF |
-| T6.6–T6.18 | Planejada (expansão apresentação) |
+| T6.6 | ✅ Medidor isenção |
+| T6.7–T6.18 | Planejada (expansão apresentação) |
 
 ---
 

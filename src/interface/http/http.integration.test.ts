@@ -209,6 +209,8 @@ describe("HTTP API", () => {
       exemptionUsedCents: 850000,
       exemptionLimitCents: 2000000,
       exemptionPercentUsed: 42.5,
+      exemptionStatus: "ok",
+      exemptionRemainingCents: 1150000,
     });
   });
 
@@ -228,6 +230,8 @@ describe("HTTP API", () => {
     expect(res.body.investedCost).toEqual({ cents: 2245000 });
     expect(res.body.monthDarf).toEqual({ cents: 48000 });
     expect(res.body.exemptionPercentUsed).toBe(91);
+    expect(res.body.exemptionStatus).toBe("warning");
+    expect(res.body.exemptionRemainingCents).toBe(180000);
   });
 
   it("GET /dashboard with empty portfolio returns zero assets", async () => {
