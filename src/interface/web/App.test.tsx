@@ -314,9 +314,9 @@ describe("Web UI", () => {
       />,
     );
     expect(await screen.findByTestId("darf-calendar")).toBeInTheDocument();
-    expect(screen.getByText("2024-03")).toBeInTheDocument();
+    expect(screen.getAllByText("2024-03").length).toBeGreaterThan(0);
     expect(screen.getByText("2024-04-30")).toBeInTheDocument();
-    expect(screen.getByText("R$ 225,00")).toBeInTheDocument();
+    expect(screen.getAllByText("R$ 225,00").length).toBeGreaterThan(0);
   });
 
   it("shows empty DARF calendar", async () => {
@@ -427,7 +427,7 @@ describe("Web UI", () => {
   it("uses print-root class for print-ready layout", () => {
     const { container } = render(<App api={mockApi()} />);
     expect(container.querySelector(".print-root")).toBeInTheDocument();
-    expect(container.querySelector(".topbar")).toHaveClass("no-print");
+    expect(container.querySelector(".sidebar")).toHaveClass("no-print");
   });
 
   it("shows year comparison side by side", async () => {

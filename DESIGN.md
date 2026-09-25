@@ -2,25 +2,25 @@
 version: alpha
 name: Fiscal-B3-ocean
 description: >
-  Visual neobank claro com âncora azul oceano e acentos verde-água.
-  Tipografia amigável (Nunito), cards brancos, CTAs em azul profundo,
-  dinheiro/positivo em teal. Sem estética crypto, sem glow, sem grid.
+  Visual neobank claro com âncora teal/verde-água.
+  Tipografia amigável (Nunito), cards brancos, CTAs em teal profundo,
+  dinheiro/positivo em verde-água. Sem estética crypto, sem glow, sem grid.
 
 colors:
-  brand: "#0B4F6C"
-  brand-deep: "#083A50"
-  brand-soft: "#E6F4F8"
-  brand-wash: "#F0F9FB"
-  money: "#14B8A6"
+  brand: "#0F766E"
+  brand-deep: "#0D5C56"
+  brand-soft: "#E6F7F5"
+  brand-wash: "#F0FAF8"
+  money: "#0D9488"
   money-soft: "#E6FAF7"
-  accent: "#2DD4BF"
+  accent: "#14B8A6"
   danger: "#E74C3C"
   danger-soft: "#FDECEA"
   ink: "#0F172A"
   body: "#334155"
   muted: "#64748B"
-  hairline: "#D0E8EF"
-  canvas: "#F0F9FB"
+  hairline: "#C5E8E3"
+  canvas: "#F0FAF8"
   surface: "#FFFFFF"
   on-brand: "#FFFFFF"
 

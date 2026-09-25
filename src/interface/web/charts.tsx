@@ -1,6 +1,6 @@
 import { formatCents, type PositionJson } from "./api";
 
-const SLICE_COLORS = ["#0b4f6c", "#14b8a6", "#0284c7", "#2dd4bf", "#0e7490"];
+const SLICE_COLORS = ["#0f766e", "#0d9488", "#14b8a6", "#2dd4bf", "#115e59"];
 
 type Slice = {
   key: string;
@@ -86,14 +86,16 @@ export function AllocationChart({
 
 export function CompareBars({
   items,
+  title = "Resumo da apuração",
 }: {
   items: readonly { label: string; cents: number; tone: "money" | "brand" | "muted" }[];
+  title?: string;
 }) {
   const max = Math.max(...items.map((item) => Math.abs(item.cents)), 1);
 
   return (
-    <div className="chart-card" role="img" aria-label="Gráfico da apuração mensal">
-      <p className="chart-title">Resumo da apuração</p>
+    <div className="chart-card" role="img" aria-label={title}>
+      <p className="chart-title">{title}</p>
       <ul className="bars">
         {items.map((item) => (
           <li key={item.label}>
@@ -107,6 +109,82 @@ export function CompareBars({
                 style={{ width: `${Math.max(6, (Math.abs(item.cents) / max) * 100)}%` }}
               />
             </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export function LineChart({
+  title,
+  labels,
+  series,
+}: {
+  title: string;
+  labels: readonly string[];
+  series: readonly { key: string; label: string; values: readonly number[]; tone: "brand" | "money" }[];
+}) {
+  const width = 320;
+  const height = 140;
+  const padX = 12;
+  const padY = 16;
+  const innerW = width - padX * 2;
+  const innerH = height - padY * 2;
+  const allValues = series.flatMap((s) => s.values);
+  const max = Math.max(...allValues, 1);
+  const min = Math.min(...allValues, 0);
+  const span = Math.max(max - min, 1);
+  const n = Math.max(labels.length, 2);
+
+  function point(index: number, value: number): string {
+    const x = padX + (index / (n - 1)) * innerW;
+    const y = padY + innerH - ((value - min) / span) * innerH;
+    return `${x},${y}`;
+  }
+
+  return (
+    <div className="chart-card" role="img" aria-label={title}>
+      <p className="chart-title">{title}</p>
+      <svg viewBox={`0 0 ${width} ${height}`} className="line-chart">
+        {[0.25, 0.5, 0.75].map((ratio) => (
+          <line
+            key={ratio}
+            className="line-chart-grid"
+            x1={padX}
+            x2={width - padX}
+            y1={padY + innerH * ratio}
+            y2={padY + innerH * ratio}
+          />
+        ))}
+        {series.map((s) => {
+          const points = s.values.map((value, index) => point(index, value)).join(" ");
+          return (
+            <g key={s.key}>
+              <polyline className={`line-series series-${s.tone}`} points={points} />
+              {s.values.map((value, index) => {
+                const [x, y] = point(index, value).split(",").map(Number);
+                return (
+                  <circle
+                    key={`${s.key}-${index}`}
+                    className={`line-dot series-${s.tone}`}
+                    cx={x}
+                    cy={y}
+                    r={3.5}
+                  >
+                    <title>{`${labels[index] ?? ""}: ${formatCents(value)}`}</title>
+                  </circle>
+                );
+              })}
+            </g>
+          );
+        })}
+      </svg>
+      <ul className="line-legend">
+        {series.map((s) => (
+          <li key={s.key}>
+            <span style={{ background: s.tone === "brand" ? "var(--brand)" : "var(--money)" }} />
+            {s.label}
           </li>
         ))}
       </ul>

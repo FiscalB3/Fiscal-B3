@@ -17,7 +17,9 @@ import {
   type TimelineEventJson,
   type YearComparisonJson,
 } from "./api";
-import { AllocationChart, CompareBars, IncomeBars } from "./charts";
+import { AllocationChart, CompareBars, IncomeBars, LineChart } from "./charts";
+import { HelpTip } from "./HelpTip";
+import { HELP } from "./helpCopy";
 import "./styles.css";
 
 type Tab =
@@ -392,7 +394,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
 
   return (
     <div className="app print-root">
-      <header className="topbar no-print">
+      <aside className="sidebar no-print">
         <div className="brand-lockup">
           <img className="brand-mark" src="/logo.png" alt="" width={36} height={36} />
           <div className="brand-text">
@@ -400,7 +402,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
             <p className="brand-tag">Organização fiscal</p>
           </div>
         </div>
-        <div className="topbar-actions">
+        <div className="sidebar-actions">
           <button
             type="button"
             className="btn-ghost"
@@ -422,7 +424,8 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
             ))}
           </nav>
         </div>
-      </header>
+      </aside>
+      <div className="app-body">
       {demo.status === "success" && (
         <p className="state state-success demo-banner" role="status">
           {demo.data}
@@ -473,7 +476,10 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
             {dashboard.status === "success" && (
               <div className="kpi-grid" data-testid="dashboard-kpis">
                 <article className="kpi-card">
-                  <p className="kpi-label">Custo investido</p>
+                  <p className="kpi-label">
+                    Custo investido
+                    <HelpTip label="Custo investido" text={HELP.custoInvestido} />
+                  </p>
                   <p className="kpi-value money">{formatCents(dashboard.data.investedCost.cents)}</p>
                 </article>
                 <article className="kpi-card">
@@ -481,11 +487,17 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
                   <p className="kpi-value">{dashboard.data.assetCount}</p>
                 </article>
                 <article className="kpi-card">
-                  <p className="kpi-label">DARF do mês</p>
+                  <p className="kpi-label">
+                    DARF do mês
+                    <HelpTip label="DARF" text={HELP.darf} />
+                  </p>
                   <p className="kpi-value">{formatCents(dashboard.data.monthDarf.cents)}</p>
                 </article>
                 <article className="kpi-card">
-                  <p className="kpi-label">Isenção usada</p>
+                  <p className="kpi-label">
+                    Isenção usada
+                    <HelpTip label="Isenção" text={HELP.isencao} />
+                  </p>
                   <p className="kpi-value">{dashboard.data.exemptionPercentUsed}%</p>
                   <p className="kpi-hint">
                     {formatCents(dashboard.data.exemptionUsedCents)} de{" "}
@@ -515,23 +527,47 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
               </div>
             )}
             {modality.status === "success" && (
-              <div className="modality-grid" data-testid="modality-breakdown">
-                {modality.data.buckets.map((bucket) => (
-                  <article key={bucket.modality} className="modality-card">
-                    <h3>{bucket.modality === "DAY_TRADE" ? "Day trade" : "Swing trade"}</h3>
-                    <p>
-                      Resultado: <strong>{formatCents(bucket.result.cents)}</strong>
-                    </p>
-                    <p>
-                      Imposto: <strong>{formatCents(bucket.tax.cents)}</strong>
-                    </p>
-                    <p>
-                      Prejuízo a compensar:{" "}
-                      <strong>{formatCents(bucket.lossCarryforward.cents)}</strong>
-                    </p>
-                  </article>
-                ))}
-              </div>
+              <>
+                <div className="modality-grid" data-testid="modality-breakdown">
+                  {modality.data.buckets.map((bucket) => (
+                    <article key={bucket.modality} className="modality-card">
+                      <h3>
+                        {bucket.modality === "DAY_TRADE" ? "Day trade" : "Swing trade"}
+                        <HelpTip
+                          label={bucket.modality === "DAY_TRADE" ? "Day trade" : "Swing trade"}
+                          text={bucket.modality === "DAY_TRADE" ? HELP.dayTrade : HELP.swingTrade}
+                        />
+                      </h3>
+                      <p>
+                        Resultado: <strong>{formatCents(bucket.result.cents)}</strong>
+                      </p>
+                      <p>
+                        Imposto: <strong>{formatCents(bucket.tax.cents)}</strong>
+                      </p>
+                      <p>
+                        Prejuízo a compensar{" "}
+                        <HelpTip label="Prejuízo a compensar" text={HELP.prejuizoCompensar} />:{" "}
+                        <strong>{formatCents(bucket.lossCarryforward.cents)}</strong>
+                      </p>
+                    </article>
+                  ))}
+                </div>
+                <CompareBars
+                  title="Day trade vs swing"
+                  items={modality.data.buckets.flatMap((bucket) => [
+                    {
+                      label: `${bucket.modality === "DAY_TRADE" ? "Day" : "Swing"} · resultado`,
+                      cents: bucket.result.cents,
+                      tone: "money" as const,
+                    },
+                    {
+                      label: `${bucket.modality === "DAY_TRADE" ? "Day" : "Swing"} · imposto`,
+                      cents: bucket.tax.cents,
+                      tone: "brand" as const,
+                    },
+                  ])}
+                />
+              </>
             )}
             {modality.status === "error" && (
               <p className="state state-error" role="alert">
@@ -540,10 +576,18 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
             )}
             {darfBreakdown.status === "success" && (
               <div className="asset-detail" data-testid="darf-breakdown">
-                <h3>Por que este DARF?</h3>
+                <h3>
+                  Por que este DARF? <HelpTip label="DARF" text={HELP.darf} />
+                </h3>
                 <p>Resultado: {formatCents(darfBreakdown.data.grossResult.cents)}</p>
-                <p>Isenção aplicada: {formatCents(darfBreakdown.data.exemptionApplied.cents)}</p>
-                <p>Base tributável: {formatCents(darfBreakdown.data.taxableBase.cents)}</p>
+                <p>
+                  Isenção aplicada <HelpTip label="Isenção" text={HELP.isencao} />:{" "}
+                  {formatCents(darfBreakdown.data.exemptionApplied.cents)}
+                </p>
+                <p>
+                  Base tributável <HelpTip label="Base tributável" text={HELP.baseTributavel} />:{" "}
+                  {formatCents(darfBreakdown.data.taxableBase.cents)}
+                </p>
                 <p>Alíquota: {darfBreakdown.data.ratePercent}%</p>
                 <p>DARF: {formatCents(darfBreakdown.data.darf.cents)}</p>
               </div>
@@ -559,26 +603,19 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
               </div>
             )}
             {costEvolution.status === "success" && (
-              <div className="table-wrap" data-testid="cost-evolution">
-                <h3 className="section-title" style={{ marginTop: "1.25rem" }}>
-                  Evolução do custo
-                </h3>
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Mês</th>
-                      <th>Custo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {costEvolution.data.points.map((point) => (
-                      <tr key={point.month}>
-                        <td>{point.month}</td>
-                        <td>{formatCents(point.costCents)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div data-testid="cost-evolution">
+                <LineChart
+                  title="Evolução do custo da carteira"
+                  labels={costEvolution.data.points.map((point) => point.month)}
+                  series={[
+                    {
+                      key: "cost",
+                      label: "Custo",
+                      values: costEvolution.data.points.map((point) => point.costCents),
+                      tone: "brand",
+                    },
+                  ]}
+                />
               </div>
             )}
           </section>
@@ -620,7 +657,10 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
 
         {tab === "darf" && (
           <section className="panel">
-            <h2 className="section-title">Calendário de DARF</h2>
+            <h2 className="section-title">
+              Calendário de DARF
+              <HelpTip label="Calendário de DARF" text={HELP.vencimentoDarf} />
+            </h2>
             <p className="section-lead">
               Meses com DARF devido e vencimento no último dia útil do mês seguinte.
             </p>
@@ -649,33 +689,46 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
               </p>
             )}
             {darfCalendar.status === "success" && (
-              <div className="table-wrap">
-                <table className="table" data-testid="darf-calendar">
-                  <thead>
-                    <tr>
-                      <th>Mês</th>
-                      <th>DARF</th>
-                      <th>Vencimento</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {darfCalendar.data.map((row) => (
-                      <tr key={row.month}>
-                        <td>{row.month}</td>
-                        <td>{formatCents(row.darf.cents)}</td>
-                        <td>{row.dueDate}</td>
+              <>
+                <CompareBars
+                  title="DARF por mês"
+                  items={darfCalendar.data.map((row) => ({
+                    label: row.month,
+                    cents: row.darf.cents,
+                    tone: "brand" as const,
+                  }))}
+                />
+                <div className="table-wrap">
+                  <table className="table" data-testid="darf-calendar">
+                    <thead>
+                      <tr>
+                        <th>Mês</th>
+                        <th>DARF</th>
+                        <th>Vencimento</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {darfCalendar.data.map((row) => (
+                        <tr key={row.month}>
+                          <td>{row.month}</td>
+                          <td>{formatCents(row.darf.cents)}</td>
+                          <td>{row.dueDate}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </section>
         )}
 
         {tab === "losses" && (
           <section className="panel">
-            <h2 className="section-title">Prejuízos a compensar</h2>
+            <h2 className="section-title">
+              Prejuízos a compensar
+              <HelpTip label="Prejuízos a compensar" text={HELP.prejuizoCompensar} />
+            </h2>
             <p className="section-lead">Evolução mensal separada por day trade e swing.</p>
             <div className="field">
               <label htmlFor="losses-year">Ano</label>
@@ -697,26 +750,46 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
               </p>
             )}
             {losses.status === "success" && (
-              <div className="table-wrap">
-                <table className="table" data-testid="loss-carryforward">
-                  <thead>
-                    <tr>
-                      <th>Mês</th>
-                      <th>Day trade</th>
-                      <th>Swing</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {losses.data.points.map((row) => (
-                      <tr key={row.month}>
-                        <td>{row.month}</td>
-                        <td>{formatCents(row.dayTrade.cents)}</td>
-                        <td>{formatCents(row.swing.cents)}</td>
+              <>
+                <LineChart
+                  title="Prejuízo a compensar no tempo"
+                  labels={losses.data.points.map((row) => row.month)}
+                  series={[
+                    {
+                      key: "day",
+                      label: "Day trade",
+                      values: losses.data.points.map((row) => row.dayTrade.cents),
+                      tone: "brand",
+                    },
+                    {
+                      key: "swing",
+                      label: "Swing",
+                      values: losses.data.points.map((row) => row.swing.cents),
+                      tone: "money",
+                    },
+                  ]}
+                />
+                <div className="table-wrap">
+                  <table className="table" data-testid="loss-carryforward">
+                    <thead>
+                      <tr>
+                        <th>Mês</th>
+                        <th>Day trade</th>
+                        <th>Swing</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {losses.data.points.map((row) => (
+                        <tr key={row.month}>
+                          <td>{row.month}</td>
+                          <td>{formatCents(row.dayTrade.cents)}</td>
+                          <td>{formatCents(row.swing.cents)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </section>
         )}
@@ -734,20 +807,57 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
               <input id="year-b" value={year} onChange={(e) => setYear(e.target.value)} />
             </div>
             {yearComparison.status === "success" && (
-              <div className="modality-grid" data-testid="year-comparison">
-                <article className="modality-card">
-                  <h3>{yearComparison.data.yearA}</h3>
-                  <p>Custo: {formatCents(yearComparison.data.costA.cents)}</p>
-                  <p>Rendimentos: {formatCents(yearComparison.data.incomeA.cents)}</p>
-                  <p>DARF: {formatCents(yearComparison.data.darfA.cents)}</p>
-                </article>
-                <article className="modality-card">
-                  <h3>{yearComparison.data.yearB}</h3>
-                  <p>Custo: {formatCents(yearComparison.data.costB.cents)}</p>
-                  <p>Rendimentos: {formatCents(yearComparison.data.incomeB.cents)}</p>
-                  <p>DARF: {formatCents(yearComparison.data.darfB.cents)}</p>
-                </article>
-              </div>
+              <>
+                <div className="modality-grid" data-testid="year-comparison">
+                  <article className="modality-card">
+                    <h3>{yearComparison.data.yearA}</h3>
+                    <p>Custo: {formatCents(yearComparison.data.costA.cents)}</p>
+                    <p>Rendimentos: {formatCents(yearComparison.data.incomeA.cents)}</p>
+                    <p>DARF: {formatCents(yearComparison.data.darfA.cents)}</p>
+                  </article>
+                  <article className="modality-card">
+                    <h3>{yearComparison.data.yearB}</h3>
+                    <p>Custo: {formatCents(yearComparison.data.costB.cents)}</p>
+                    <p>Rendimentos: {formatCents(yearComparison.data.incomeB.cents)}</p>
+                    <p>DARF: {formatCents(yearComparison.data.darfB.cents)}</p>
+                  </article>
+                </div>
+                <CompareBars
+                  title="Comparativo lado a lado"
+                  items={[
+                    {
+                      label: `Custo ${yearComparison.data.yearA}`,
+                      cents: yearComparison.data.costA.cents,
+                      tone: "muted",
+                    },
+                    {
+                      label: `Custo ${yearComparison.data.yearB}`,
+                      cents: yearComparison.data.costB.cents,
+                      tone: "brand",
+                    },
+                    {
+                      label: `Rend. ${yearComparison.data.yearA}`,
+                      cents: yearComparison.data.incomeA.cents,
+                      tone: "muted",
+                    },
+                    {
+                      label: `Rend. ${yearComparison.data.yearB}`,
+                      cents: yearComparison.data.incomeB.cents,
+                      tone: "money",
+                    },
+                    {
+                      label: `DARF ${yearComparison.data.yearA}`,
+                      cents: yearComparison.data.darfA.cents,
+                      tone: "muted",
+                    },
+                    {
+                      label: `DARF ${yearComparison.data.yearB}`,
+                      cents: yearComparison.data.darfB.cents,
+                      tone: "brand",
+                    },
+                  ]}
+                />
+              </>
             )}
             {yearComparison.status === "error" && (
               <p className="state state-error" role="alert">
@@ -759,7 +869,10 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
 
         {tab === "simulate" && (
           <section className="panel">
-            <h2 className="section-title">Simular venda</h2>
+            <h2 className="section-title">
+              Simular venda
+              <HelpTip label="Simular venda" text={HELP.simularVenda} />
+            </h2>
             <p className="section-lead">Estime ganho e IR do mês sem gravar a operação.</p>
             <form
               className="stack"
@@ -801,6 +914,21 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
                 <p>Ganho/perda estimado: {formatCents(simulation.data.estimatedGainCents)}</p>
                 <p>IR estimado: {formatCents(simulation.data.estimatedTaxCents)}</p>
                 <p>Não persistido</p>
+                <CompareBars
+                  title="Impacto estimado da venda"
+                  items={[
+                    {
+                      label: "Ganho/perda",
+                      cents: simulation.data.estimatedGainCents,
+                      tone: "money",
+                    },
+                    {
+                      label: "IR estimado",
+                      cents: simulation.data.estimatedTaxCents,
+                      tone: "brand",
+                    },
+                  ]}
+                />
               </div>
             )}
             {simulation.status === "error" && (
@@ -817,7 +945,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
             <p className="section-lead">
               Envie a planilha da sua corretora em CSV ou XLSX para atualizar suas operações.
             </p>
-            <form onSubmit={onUpload}>
+            <form onSubmit={onUpload} className="upload-form">
               <div
                 className={dragging ? "dropzone is-dragging" : "dropzone"}
                 onDragOver={(event) => {
@@ -952,7 +1080,8 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
                         Quantidade: <strong>{row.quantity}</strong>
                       </p>
                       <p>
-                        Preço médio: <strong>{formatCents(row.averagePrice.cents)}</strong>
+                        Preço médio <HelpTip label="Preço médio" text={HELP.precoMedio} />:{" "}
+                        <strong>{formatCents(row.averagePrice.cents)}</strong>
                       </p>
                       <p>
                         Custo de aquisição:{" "}
@@ -994,7 +1123,10 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
 
         {tab === "apuration" && (
           <section className="panel">
-            <h2 className="section-title">Apuração mensal</h2>
+            <h2 className="section-title">
+              Apuração mensal
+              <HelpTip label="Apuração mensal" text={HELP.apuracao} />
+            </h2>
             <p className="section-lead">
               Confira o resultado do mês, a isenção aplicada e o valor estimado de DARF.
             </p>
@@ -1015,7 +1147,10 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
             {apuration.status === "success" && (
               <>
                 <div className="balance">
-                  <span className="balance-label">DARF estimado</span>
+                  <span className="balance-label">
+                    DARF estimado
+                    <HelpTip label="DARF" text={HELP.darf} />
+                  </span>
                   <span className="balance-value">{formatCents(apuration.data.darf.cents)}</span>
                 </div>
                 <CompareBars
@@ -1090,8 +1225,9 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
                     DARF do ano revisado
                   </label>
                 </div>
-                <h3 className="section-title" style={{ marginTop: "1.25rem" }}>
+                <h3 className="section-title">
                   Bens e direitos
+                  <HelpTip label="Bens e direitos" text={HELP.bensDireitos} />
                 </h3>
                 {declaration.data.bensEDireitos.length === 0 ? (
                   <p className="state state-empty">Nenhum bem declarado neste ano.</p>
@@ -1142,6 +1278,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
           </section>
         )}
       </main>
+      </div>
     </div>
   );
 }
