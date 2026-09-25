@@ -1,6 +1,6 @@
 import { formatCents, type PositionJson } from "./api";
 
-const SLICE_COLORS = ["#820ad1", "#1db954", "#5b21b6", "#c084fc", "#0f766e"];
+const SLICE_COLORS = ["#0b4f6c", "#14b8a6", "#0284c7", "#2dd4bf", "#0e7490"];
 
 type Slice = {
   key: string;

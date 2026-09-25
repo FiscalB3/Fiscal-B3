@@ -1,26 +1,26 @@
 ---
 version: alpha
-name: Fiscal-B3-neobank
+name: Fiscal-B3-ocean
 description: >
-  Visual inspirado em neobancos brasileiros (Nubank, PicPay): canvas claro,
-  roxo de marca como âncora, verde para dinheiro positivo, tipografia amigável,
-  cards brancos arredondados e zero estética de trading/crypto. Prioriza
-  clareza, respiração e confiança — sem glow, grid ou gradientes de texto.
+  Visual neobank claro com âncora azul oceano e acentos verde-água.
+  Tipografia amigável (Nunito), cards brancos, CTAs em azul profundo,
+  dinheiro/positivo em teal. Sem estética crypto, sem glow, sem grid.
 
 colors:
-  brand: "#820AD1"
-  brand-deep: "#6B08AD"
-  brand-soft: "#F3E8FF"
-  brand-wash: "#F7F0FF"
-  money: "#1DB954"
-  money-soft: "#E8F8EF"
+  brand: "#0B4F6C"
+  brand-deep: "#083A50"
+  brand-soft: "#E6F4F8"
+  brand-wash: "#F0F9FB"
+  money: "#14B8A6"
+  money-soft: "#E6FAF7"
+  accent: "#2DD4BF"
   danger: "#E74C3C"
   danger-soft: "#FDECEA"
-  ink: "#111111"
-  body: "#3D3D3D"
-  muted: "#8B8B8B"
-  hairline: "#EDE4F5"
-  canvas: "#F7F0FF"
+  ink: "#0F172A"
+  body: "#334155"
+  muted: "#64748B"
+  hairline: "#D0E8EF"
+  canvas: "#F0F9FB"
   surface: "#FFFFFF"
   on-brand: "#FFFFFF"
 
@@ -47,9 +47,7 @@ motion:
   nav: "background color 200ms"
 
 do-not:
-  - dark crypto terminal
-  - neon yellow CTAs
-  - grid overlays / radial glow blobs
-  - gradient text headlines
-  - "AI dashboard" metric walls
-  - trading jargon (desk, ao vivo, wealth)
+  - purple brand tokens
+  - crypto neon yellow
+  - presentation guided tour mode
+  - dark trading terminal default

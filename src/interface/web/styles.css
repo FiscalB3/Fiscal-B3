@@ -1,16 +1,16 @@
 :root {
-  --brand: #820ad1;
-  --brand-deep: #6b08ad;
-  --brand-soft: #f3e8ff;
-  --money: #1db954;
-  --money-soft: #e8f8ef;
+  --brand: #0b4f6c;
+  --brand-deep: #083a50;
+  --brand-soft: #e6f4f8;
+  --money: #14b8a6;
+  --money-soft: #e6faf7;
   --danger: #e74c3c;
   --danger-soft: #fdecea;
-  --ink: #111111;
-  --body: #3d3d3d;
-  --muted: #8b8b8b;
-  --hairline: #ede4f5;
-  --canvas: #f7f0ff;
+  --ink: #0f172a;
+  --body: #334155;
+  --muted: #64748b;
+  --hairline: #d0e8ef;
+  --canvas: #f0f9fb;
   --surface: #ffffff;
   --on-brand: #ffffff;
   --font: "Nunito", system-ui, sans-serif;
@@ -154,7 +154,7 @@ body {
   background: var(--surface);
   border-radius: var(--radius-lg);
   padding: 1.35rem 1.25rem;
-  box-shadow: 0 8px 24px rgba(130, 10, 209, 0.06);
+  box-shadow: 0 8px 24px rgba(11, 79, 108, 0.08);
 }
 
 .section-title {
@@ -248,7 +248,7 @@ body {
 .field input:focus {
   outline: none;
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(130, 10, 209, 0.15);
+  box-shadow: 0 0 0 3px rgba(11, 79, 108, 0.15);
 }
 
 .table-wrap {
@@ -280,7 +280,7 @@ body {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  background: #faf7fd;
+  background: #f3fafb;
 }
 
 .table td {
@@ -306,7 +306,7 @@ body {
 }
 
 .state-empty {
-  background: #faf7fd;
+  background: #f3fafb;
   color: var(--muted);
   border: 1px dashed var(--hairline);
 }
@@ -361,7 +361,7 @@ body {
 
 .dropzone.is-dragging {
   outline: 2px dashed var(--brand);
-  background: #efe0ff;
+  background: #d9f3f7;
 }
 
 .split {
@@ -376,7 +376,7 @@ body {
 }
 
 .chart-card {
-  background: #faf7fd;
+  background: #f3fafb;
   border-radius: var(--radius);
   padding: 1rem;
 }
@@ -407,7 +407,7 @@ body {
 }
 
 .donut-track {
-  stroke: #efe6f8;
+  stroke: #d5eef4;
 }
 
 .donut-slice {
@@ -494,7 +494,7 @@ body {
 .bar-track {
   height: 0.55rem;
   border-radius: 999px;
-  background: #efe6f8;
+  background: #d5eef4;
   overflow: hidden;
 }
 
@@ -513,7 +513,7 @@ body {
 }
 
 .tone-muted {
-  background: #c4b5d4;
+  background: #7eb6c6;
 }
 
 .table tbody tr {
