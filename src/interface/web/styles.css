@@ -351,6 +351,35 @@ body {
   color: var(--body);
 }
 
+.asset-detail {
+  margin-top: 1.25rem;
+  padding: 1.1rem 1.25rem;
+  background: var(--brand-soft);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+}
+
+.asset-detail h3 {
+  margin: 0 0 0.75rem;
+  color: var(--brand);
+}
+
+.asset-detail h4 {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.asset-history {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--ink);
+}
+
+.asset-history li {
+  margin: 0.35rem 0;
+}
+
 .timeline {
   list-style: none;
   margin: 0;

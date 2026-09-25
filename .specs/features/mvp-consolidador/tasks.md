@@ -367,10 +367,12 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Abre a partir da carteira/gráfico
-- [ ] Sem recalcular PM na UI
-- [ ] Gate: quick
-- [ ] Test count: ≥6
+- [x] Abre a partir da carteira/gráfico
+- [x] Sem recalcular PM na UI
+- [x] Gate: quick
+- [x] Test count: ≥6
+
+**Status**: ✅ Concluída
 
 **Tests**: unit  
 **Gate**: quick
@@ -614,7 +616,8 @@ T6.1 → T6.2 → T6.3 → T6.6 → T6.14 → T6.18 → T6.16 → T6.7 → T6.8 
 | T6.6 | ✅ Medidor isenção |
 | T6.7 | ✅ Day vs swing |
 | T6.8 | ✅ Prejuízos |
-| T6.9–T6.18 | Planejada (expansão apresentação) |
+| T6.9 | ✅ Detalhe ativo |
+| T6.10–T6.18 | Planejada (expansão apresentação) |
 
 ---
 

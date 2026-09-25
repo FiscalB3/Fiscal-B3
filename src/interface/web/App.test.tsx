@@ -312,4 +312,40 @@ describe("Web UI", () => {
     expect(screen.getByText("R$ 500,00")).toBeInTheDocument();
     expect(screen.getByText("R$ 200,00")).toBeInTheDocument();
   });
+
+  it("opens asset detail from portfolio without recalculating average price", async () => {
+    const user = userEvent.setup();
+    render(
+      <App
+        api={mockApi({
+          getPortfolio: vi.fn().mockResolvedValue([
+            {
+              ticker: "PETR4",
+              quantity: 100,
+              averagePrice: { cents: 2850 },
+              acquisitionCost: { cents: 285000 },
+            },
+          ]),
+          getTimeline: vi.fn().mockResolvedValue([
+            {
+              id: "1",
+              date: "2024-01-10",
+              kind: "BUY",
+              ticker: "PETR4",
+              summary: "Compra de 100 PETR4",
+            },
+          ]),
+        })}
+        initialTab="portfolio"
+      />,
+    );
+    expect((await screen.findAllByText("PETR4")).length).toBeGreaterThan(0);
+    const row = screen.getByText("100").closest("tr");
+    expect(row).toBeTruthy();
+    await user.click(row!);
+    expect(await screen.findByTestId("asset-detail")).toBeInTheDocument();
+    expect(screen.getByText("Detalhe · PETR4")).toBeInTheDocument();
+    expect(screen.getAllByText("R$ 28,50").length).toBeGreaterThan(0);
+    expect(screen.getByText(/Compra de 100 PETR4/)).toBeInTheDocument();
+  });
 });

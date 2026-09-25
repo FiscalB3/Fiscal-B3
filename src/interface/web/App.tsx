@@ -75,6 +75,35 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
   const [timelineReload, setTimelineReload] = useState(0);
   const [darfReload, setDarfReload] = useState(0);
   const [lossesReload, setLossesReload] = useState(0);
+  const [assetHistory, setAssetHistory] = useState<LoadState<TimelineEventJson[]>>({ status: "idle" });
+
+  useEffect(() => {
+    if (tab !== "portfolio" || !selectedTicker) {
+      setAssetHistory({ status: "idle" });
+      return;
+    }
+    let cancelled = false;
+    setAssetHistory({ status: "loading" });
+    api
+      .getTimeline()
+      .then((events) => {
+        if (cancelled) return;
+        const filtered = events.filter((event) => event.ticker === selectedTicker);
+        setAssetHistory(
+          filtered.length === 0 ? { status: "empty" } : { status: "success", data: filtered },
+        );
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setAssetHistory({
+          status: "error",
+          message: "Não foi possível carregar o histórico do ativo.",
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [api, tab, selectedTicker]);
 
   useEffect(() => {
     if (tab !== "dashboard") return;
@@ -687,6 +716,55 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
                   </table>
                 </div>
               </div>
+            )}
+            {portfolio.status === "success" && selectedTicker && (
+              <aside className="asset-detail" data-testid="asset-detail">
+                {(() => {
+                  const row = portfolio.data.find((item) => item.ticker === selectedTicker);
+                  if (!row) return null;
+                  return (
+                    <>
+                      <h3>Detalhe · {row.ticker}</h3>
+                      <p>
+                        Quantidade: <strong>{row.quantity}</strong>
+                      </p>
+                      <p>
+                        Preço médio: <strong>{formatCents(row.averagePrice.cents)}</strong>
+                      </p>
+                      <p>
+                        Custo de aquisição:{" "}
+                        <strong className="money">{formatCents(row.acquisitionCost.cents)}</strong>
+                      </p>
+                      <h4>Histórico recente</h4>
+                      {assetHistory.status === "loading" && (
+                        <p className="state" role="status">
+                          Carregando histórico…
+                        </p>
+                      )}
+                      {assetHistory.status === "empty" && (
+                        <p className="state state-empty" role="status">
+                          Sem eventos para este ativo.
+                        </p>
+                      )}
+                      {assetHistory.status === "error" && (
+                        <p className="state state-error" role="alert">
+                          {assetHistory.message}
+                        </p>
+                      )}
+                      {assetHistory.status === "success" && (
+                        <ul className="asset-history">
+                          {assetHistory.data.map((event) => (
+                            <li key={event.id}>
+                              <time dateTime={event.date}>{event.date}</time> · {event.kind} ·{" "}
+                              {event.summary}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </>
+                  );
+                })()}
+              </aside>
             )}
           </section>
         )}
