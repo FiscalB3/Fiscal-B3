@@ -326,9 +326,11 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Buckets lado a lado sem misturar modalidades
-- [ ] Gate: full
-- [ ] Test count: ≥8
+- [x] Buckets lado a lado sem misturar modalidades
+- [x] Gate: full
+- [x] Test count: ≥8
+
+**Status**: ✅ Concluída (3 HTTP + 1 UI)
 
 **Tests**: unit + integration  
 **Gate**: full
@@ -608,7 +610,8 @@ T6.1 → T6.2 → T6.3 → T6.6 → T6.14 → T6.18 → T6.16 → T6.7 → T6.8 
 | T6.4 | ✅ Timeline |
 | T6.5 | ✅ Calendário DARF |
 | T6.6 | ✅ Medidor isenção |
-| T6.7–T6.18 | Planejada (expansão apresentação) |
+| T6.7 | ✅ Day vs swing |
+| T6.8–T6.18 | Planejada (expansão apresentação) |
 
 ---
 

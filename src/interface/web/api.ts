@@ -54,11 +54,24 @@ export type DarfObligationJson = {
   dueDate: string;
 };
 
+export type ModalityBucketJson = {
+  modality: "DAY_TRADE" | "SWING";
+  result: MoneyJson;
+  tax: MoneyJson;
+  lossCarryforward: MoneyJson;
+};
+
+export type ModalityBreakdownJson = {
+  month: string;
+  buckets: ModalityBucketJson[];
+};
+
 export type ApiClient = {
   getPortfolio(): Promise<PositionJson[]>;
   getDashboard(month: string): Promise<DashboardJson>;
   getTimeline(): Promise<TimelineEventJson[]>;
   getDarfCalendar(year?: number): Promise<DarfObligationJson[]>;
+  getModalityBreakdown(month: string): Promise<ModalityBreakdownJson>;
   getApuration(month: string): Promise<MonthlyApurationJson>;
   getDeclaration(year: number): Promise<AnnualDeclarationJson>;
   importFile(file: File): Promise<{ ok: true } | { ok: false; errors: Array<{ line: number; message: string }> }>;
@@ -98,6 +111,16 @@ export function createApiClient(baseUrl = ""): ApiClient {
         throw new Error("Failed to load DARF calendar");
       }
       return (await res.json()) as DarfObligationJson[];
+    },
+
+    async getModalityBreakdown(month: string) {
+      const res = await fetch(
+        `${baseUrl}/modality-breakdown?month=${encodeURIComponent(month)}`,
+      );
+      if (!res.ok) {
+        throw new Error("Failed to load modality breakdown");
+      }
+      return (await res.json()) as ModalityBreakdownJson;
     },
 
     async getApuration(month: string) {

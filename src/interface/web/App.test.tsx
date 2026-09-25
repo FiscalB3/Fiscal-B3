@@ -26,6 +26,23 @@ function mockApi(overrides: Partial<ApiClient> = {}): ApiClient {
     }),
     getTimeline: vi.fn().mockResolvedValue([]),
     getDarfCalendar: vi.fn().mockResolvedValue([]),
+    getModalityBreakdown: vi.fn().mockResolvedValue({
+      month: "2024-03",
+      buckets: [
+        {
+          modality: "SWING",
+          result: { cents: 150000 },
+          tax: { cents: 22500 },
+          lossCarryforward: { cents: 0 },
+        },
+        {
+          modality: "DAY_TRADE",
+          result: { cents: 0 },
+          tax: { cents: 0 },
+          lossCarryforward: { cents: 40000 },
+        },
+      ],
+    }),
     getApuration: vi.fn(),
     getDeclaration: vi.fn(),
     importFile: vi.fn(),
@@ -52,7 +69,7 @@ describe("Web UI", () => {
     expect(await screen.findByText("Custo investido")).toBeInTheDocument();
     expect(screen.getByText("R$ 7734,00")).toBeInTheDocument();
     expect(screen.getByText("3")).toBeInTheDocument();
-    expect(screen.getByText("R$ 225,00")).toBeInTheDocument();
+    expect(screen.getAllByText("R$ 225,00").length).toBeGreaterThan(0);
     expect(screen.getByText("42.5%")).toBeInTheDocument();
     expect(screen.getByTestId("exemption-meter")).toHaveClass("is-ok");
   });
@@ -265,5 +282,13 @@ describe("Web UI", () => {
   it("shows empty DARF calendar", async () => {
     render(<App api={mockApi({ getDarfCalendar: vi.fn().mockResolvedValue([]) })} initialTab="darf" />);
     expect(await screen.findByText("Nenhuma obrigação de DARF neste ano.")).toBeInTheDocument();
+  });
+
+  it("shows day vs swing modality buckets side by side", async () => {
+    render(<App api={mockApi({ getDashboard: vi.fn().mockResolvedValue(sampleDashboard) })} />);
+    expect(await screen.findByTestId("modality-breakdown")).toBeInTheDocument();
+    expect(screen.getByText("Swing trade")).toBeInTheDocument();
+    expect(screen.getByText("Day trade")).toBeInTheDocument();
+    expect(screen.getByText("R$ 400,00")).toBeInTheDocument();
   });
 });

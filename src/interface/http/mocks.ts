@@ -1,6 +1,7 @@
 import type { GetAnnualDeclaration, AnnualDeclaration } from "../../application/ports/GetAnnualDeclaration";
 import type { GetDarfCalendar, DarfObligation } from "../../application/ports/GetDarfCalendar";
 import type { GetDashboard, DashboardSummary } from "../../application/ports/GetDashboard";
+import type { GetModalityBreakdown, ModalityBreakdown } from "../../application/ports/GetModalityBreakdown";
 import type { GetMonthlyApuration, MonthlyApuration } from "../../application/ports/GetMonthlyApuration";
 import type { GetPortfolio } from "../../application/ports/GetPortfolio";
 import type { GetTimeline, TimelineEvent } from "../../application/ports/GetTimeline";
@@ -100,6 +101,36 @@ const SAMPLE_RENDIMENTOS: AnnualDeclaration["rendimentos"] = [
 
 const SAMPLE_EXEMPTION_USED_CENTS = 850_000;
 const DEMO_EXEMPTION_USED_CENTS = 1_820_000;
+
+const SAMPLE_MODALITY: ModalityBreakdown["buckets"] = [
+  {
+    modality: "SWING",
+    result: Money.fromReais("1500.00"),
+    tax: Money.fromReais("225.00"),
+    lossCarryforward: Money.fromReais("0.00"),
+  },
+  {
+    modality: "DAY_TRADE",
+    result: Money.fromReais("0.00"),
+    tax: Money.fromReais("0.00"),
+    lossCarryforward: Money.fromReais("400.00"),
+  },
+];
+
+const DEMO_MODALITY: ModalityBreakdown["buckets"] = [
+  {
+    modality: "SWING",
+    result: Money.fromReais("2800.00"),
+    tax: Money.fromReais("420.00"),
+    lossCarryforward: Money.fromReais("0.00"),
+  },
+  {
+    modality: "DAY_TRADE",
+    result: Money.fromReais("400.00"),
+    tax: Money.fromReais("80.00"),
+    lossCarryforward: Money.fromReais("150.00"),
+  },
+];
 
 const SAMPLE_TIMELINE: readonly TimelineEvent[] = [
   {
@@ -216,6 +247,17 @@ function cloneTimeline(events: readonly TimelineEvent[]): TimelineEvent[] {
   return events.map((event) => ({ ...event }));
 }
 
+function cloneModalityBuckets(
+  buckets: ModalityBreakdown["buckets"],
+): ModalityBreakdown["buckets"] {
+  return buckets.map((b) => ({
+    modality: b.modality,
+    result: Money.fromCents(b.result.toCents()),
+    tax: Money.fromCents(b.tax.toCents()),
+    lossCarryforward: Money.fromCents(b.lossCarryforward.toCents()),
+  }));
+}
+
 export function createMockPorts(options?: {
   portfolio?: readonly PositionSnapshot[];
   importOk?: boolean;
@@ -225,6 +267,7 @@ export function createMockPorts(options?: {
   let portfolio = clonePortfolio(options?.portfolio ?? samplePortfolio);
   let timeline = cloneTimeline(options?.timeline ?? SAMPLE_TIMELINE);
   let darfMonths = [...(options?.darfMonths ?? SAMPLE_DARF_MONTHS)];
+  let modalityBuckets = cloneModalityBuckets(SAMPLE_MODALITY);
   let demoActive = false;
   const importOk = options?.importOk ?? true;
 
@@ -309,11 +352,21 @@ export function createMockPorts(options?: {
     },
   };
 
+  const getModalityBreakdown: GetModalityBreakdown = {
+    async execute({ month }): Promise<ModalityBreakdown> {
+      return {
+        month,
+        buckets: cloneModalityBuckets(modalityBuckets),
+      };
+    },
+  };
+
   const resetDemo: ResetDemo = {
     async execute(): Promise<ResetDemoResult> {
       portfolio = clonePortfolio(DEMO_PORTFOLIO);
       timeline = cloneTimeline(DEMO_TIMELINE);
       darfMonths = [...DEMO_DARF_MONTHS];
+      modalityBuckets = cloneModalityBuckets(DEMO_MODALITY);
       demoActive = true;
       return {
         ok: true,
@@ -333,6 +386,7 @@ export function createMockPorts(options?: {
     getDashboard,
     getTimeline,
     getDarfCalendar,
+    getModalityBreakdown,
     resetDemo,
   };
 }

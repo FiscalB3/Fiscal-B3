@@ -315,4 +315,42 @@ describe("HTTP API", () => {
     const res = await request(app).get("/darf-calendar").query({ year: "2024" });
     expect(res.body).toEqual([{ month: "2024-02", darf: { cents: 5000 }, dueDate: "2024-03-29" }]);
   });
+
+  it("GET /modality-breakdown returns separate day and swing buckets", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).get("/modality-breakdown").query({ month: "2024-03" });
+    expect(res.status).toBe(200);
+    expect(res.body.month).toBe("2024-03");
+    expect(res.body.buckets).toEqual([
+      {
+        modality: "SWING",
+        result: { cents: 150000 },
+        tax: { cents: 22500 },
+        lossCarryforward: { cents: 0 },
+      },
+      {
+        modality: "DAY_TRADE",
+        result: { cents: 0 },
+        tax: { cents: 0 },
+        lossCarryforward: { cents: 40000 },
+      },
+    ]);
+  });
+
+  it("GET /modality-breakdown without month returns 400", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).get("/modality-breakdown");
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "Query parameter month is required as YYYY-MM" });
+  });
+
+  it("GET /modality-breakdown after demo keeps modalities separate", async () => {
+    const app = createApp(createMockPorts());
+    await request(app).post("/demo/reset");
+    const res = await request(app).get("/modality-breakdown").query({ month: "2024-03" });
+    const modalities = res.body.buckets.map((b: { modality: string }) => b.modality);
+    expect(modalities).toEqual(["SWING", "DAY_TRADE"]);
+    expect(res.body.buckets[0].tax.cents).toBe(42000);
+    expect(res.body.buckets[1].tax.cents).toBe(8000);
+  });
 });

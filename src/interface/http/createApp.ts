@@ -3,6 +3,7 @@ import multer from "multer";
 import type { GetAnnualDeclaration } from "../../application/ports/GetAnnualDeclaration";
 import type { GetDarfCalendar } from "../../application/ports/GetDarfCalendar";
 import type { GetDashboard } from "../../application/ports/GetDashboard";
+import type { GetModalityBreakdown } from "../../application/ports/GetModalityBreakdown";
 import type { GetMonthlyApuration } from "../../application/ports/GetMonthlyApuration";
 import type { GetPortfolio } from "../../application/ports/GetPortfolio";
 import type { GetTimeline } from "../../application/ports/GetTimeline";
@@ -24,6 +25,7 @@ export type AppPorts = {
   getDashboard: GetDashboard;
   getTimeline: GetTimeline;
   getDarfCalendar: GetDarfCalendar;
+  getModalityBreakdown: GetModalityBreakdown;
   resetDemo: ResetDemo;
 };
 
@@ -99,6 +101,28 @@ export function createApp(ports: AppPorts): Express {
           dueDate: row.dueDate,
         })),
       );
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/modality-breakdown", async (req, res, next) => {
+    try {
+      const month = typeof req.query.month === "string" ? req.query.month : "";
+      if (!MONTH_PATTERN.test(month)) {
+        res.status(400).json({ error: "Query parameter month is required as YYYY-MM" });
+        return;
+      }
+      const breakdown = await ports.getModalityBreakdown.execute({ month });
+      res.status(200).json({
+        month: breakdown.month,
+        buckets: breakdown.buckets.map((bucket) => ({
+          modality: bucket.modality,
+          result: serializeMoney(bucket.result),
+          tax: serializeMoney(bucket.tax),
+          lossCarryforward: serializeMoney(bucket.lossCarryforward),
+        })),
+      });
     } catch (error) {
       next(error);
     }

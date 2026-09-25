@@ -6,6 +6,7 @@ import {
   type ApiClient,
   type DashboardJson,
   type DarfObligationJson,
+  type ModalityBreakdownJson,
   type MonthlyApurationJson,
   type PositionJson,
   type TimelineEventJson,
@@ -41,6 +42,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
   const [api] = useState(() => apiProp ?? createApiClient());
   const [tab, setTab] = useState<Tab>(initialTab);
   const [dashboard, setDashboard] = useState<LoadState<DashboardJson>>({ status: "idle" });
+  const [modality, setModality] = useState<LoadState<ModalityBreakdownJson>>({ status: "idle" });
   const [timeline, setTimeline] = useState<LoadState<TimelineEventJson[]>>({ status: "idle" });
   const [darfCalendar, setDarfCalendar] = useState<LoadState<DarfObligationJson[]>>({
     status: "idle",
@@ -64,6 +66,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
     if (tab !== "dashboard") return;
     let cancelled = false;
     setDashboard({ status: "loading" });
+    setModality({ status: "loading" });
     api
       .getDashboard(month)
       .then((data) => {
@@ -77,6 +80,19 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
         setDashboard({
           status: "error",
           message: "Não foi possível carregar o resumo. Tente novamente em instantes.",
+        });
+      });
+    api
+      .getModalityBreakdown(month)
+      .then((data) => {
+        if (cancelled) return;
+        setModality({ status: "success", data });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setModality({
+          status: "error",
+          message: "Não foi possível carregar day trade vs swing.",
         });
       });
     return () => {
@@ -352,6 +368,30 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
                   </p>
                 </article>
               </div>
+            )}
+            {modality.status === "success" && (
+              <div className="modality-grid" data-testid="modality-breakdown">
+                {modality.data.buckets.map((bucket) => (
+                  <article key={bucket.modality} className="modality-card">
+                    <h3>{bucket.modality === "DAY_TRADE" ? "Day trade" : "Swing trade"}</h3>
+                    <p>
+                      Resultado: <strong>{formatCents(bucket.result.cents)}</strong>
+                    </p>
+                    <p>
+                      Imposto: <strong>{formatCents(bucket.tax.cents)}</strong>
+                    </p>
+                    <p>
+                      Prejuízo a compensar:{" "}
+                      <strong>{formatCents(bucket.lossCarryforward.cents)}</strong>
+                    </p>
+                  </article>
+                ))}
+              </div>
+            )}
+            {modality.status === "error" && (
+              <p className="state state-error" role="alert">
+                {modality.message}
+              </p>
             )}
           </section>
         )}
