@@ -22,6 +22,7 @@ function mockApi(overrides: Partial<ApiClient> = {}): ApiClient {
       assetCount: 0,
       investedCost: { cents: 0 },
     }),
+    getTimeline: vi.fn().mockResolvedValue([]),
     getApuration: vi.fn(),
     getDeclaration: vi.fn(),
     importFile: vi.fn(),
@@ -185,5 +186,54 @@ describe("Web UI", () => {
     expect(await screen.findByTestId("dashboard-kpis")).toBeInTheDocument();
     expect(screen.getByText("6")).toBeInTheDocument();
     expect(screen.getByText("91%")).toBeInTheDocument();
+  });
+
+  it("shows timeline events ordered with type ticker and date", async () => {
+    render(
+      <App
+        api={mockApi({
+          getTimeline: vi.fn().mockResolvedValue([
+            {
+              id: "1",
+              date: "2024-01-10",
+              kind: "BUY",
+              ticker: "PETR4",
+              summary: "Compra de 100 PETR4",
+            },
+            {
+              id: "2",
+              date: "2024-03-12",
+              kind: "SELL",
+              ticker: "PETR4",
+              summary: "Venda swing de 20 PETR4",
+            },
+          ]),
+        })}
+        initialTab="timeline"
+      />,
+    );
+    const list = await screen.findByTestId("timeline-list");
+    expect(list).toBeInTheDocument();
+    expect(screen.getByText("2024-01-10")).toBeInTheDocument();
+    expect(screen.getByText("BUY")).toBeInTheDocument();
+    expect(screen.getByText("SELL")).toBeInTheDocument();
+    expect(screen.getByText("Compra de 100 PETR4")).toBeInTheDocument();
+  });
+
+  it("shows empty timeline state", async () => {
+    render(<App api={mockApi({ getTimeline: vi.fn().mockResolvedValue([]) })} initialTab="timeline" />);
+    expect(await screen.findByText("Nenhum evento registrado ainda.")).toBeInTheDocument();
+  });
+
+  it("shows timeline error", async () => {
+    render(
+      <App
+        api={mockApi({ getTimeline: vi.fn().mockRejectedValue(new Error("Failed to load timeline")) })}
+        initialTab="timeline"
+      />,
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Não foi possível carregar a linha do tempo. Tente novamente.",
+    );
   });
 });

@@ -302,6 +302,50 @@ body {
   font-weight: 600;
 }
 
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.timeline-item {
+  display: grid;
+  grid-template-columns: 7rem 7.5rem 5rem 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.85rem 1rem;
+  background: var(--brand-soft);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+}
+
+.timeline-item time {
+  font-weight: 700;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.timeline-kind {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--brand);
+}
+
+.timeline-summary {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .timeline-item {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .field {
   display: flex;
   flex-direction: column;

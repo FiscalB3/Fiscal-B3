@@ -4,6 +4,7 @@ import type { GetAnnualDeclaration } from "../../application/ports/GetAnnualDecl
 import type { GetDashboard } from "../../application/ports/GetDashboard";
 import type { GetMonthlyApuration } from "../../application/ports/GetMonthlyApuration";
 import type { GetPortfolio } from "../../application/ports/GetPortfolio";
+import type { GetTimeline } from "../../application/ports/GetTimeline";
 import type { ImportOperations } from "../../application/ports/ImportOperations";
 import type { ResetDemo } from "../../application/ports/ResetDemo";
 import {
@@ -19,6 +20,7 @@ export type AppPorts = {
   getMonthlyApuration: GetMonthlyApuration;
   getAnnualDeclaration: GetAnnualDeclaration;
   getDashboard: GetDashboard;
+  getTimeline: GetTimeline;
   resetDemo: ResetDemo;
 };
 
@@ -61,6 +63,15 @@ export function createApp(ports: AppPorts): Express {
       }
       const summary = await ports.getDashboard.execute({ month });
       res.status(200).json(serializeDashboard(summary));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/timeline", async (_req, res, next) => {
+    try {
+      const events = await ports.getTimeline.execute();
+      res.status(200).json(events);
     } catch (error) {
       next(error);
     }

@@ -237,4 +237,48 @@ describe("HTTP API", () => {
     expect(res.body.assetCount).toBe(0);
     expect(res.body.investedCost).toEqual({ cents: 0 });
   });
+
+  it("GET /timeline returns chronologically ordered events", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).get("/timeline");
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(3);
+    expect(res.body[0].date).toBe("2024-01-10");
+    expect(res.body[0].kind).toBe("BUY");
+    expect(res.body[0].ticker).toBe("PETR4");
+    expect(res.body[2].date).toBe("2024-03-12");
+    expect(res.body[2].kind).toBe("SELL");
+  });
+
+  it("GET /timeline returns empty list", async () => {
+    const app = createApp(createMockPorts({ timeline: [] }));
+    const res = await request(app).get("/timeline");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it("GET /timeline after demo reset includes day trade and FII events", async () => {
+    const app = createApp(createMockPorts({ timeline: [] }));
+    await request(app).post("/demo/reset");
+    const res = await request(app).get("/timeline");
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBeGreaterThanOrEqual(5);
+    const kinds = res.body.map((row: { kind: string }) => row.kind);
+    expect(kinds).toContain("DAY_TRADE");
+    expect(kinds).toContain("RENDIMENTO_FII");
+    const dates = res.body.map((row: { date: string }) => row.date);
+    expect([...dates].sort()).toEqual(dates);
+  });
+
+  it("GET /timeline events expose id date kind ticker summary", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).get("/timeline");
+    expect(res.body[0]).toEqual({
+      id: "s1",
+      date: "2024-01-10",
+      kind: "BUY",
+      ticker: "PETR4",
+      summary: "Compra de 100 PETR4",
+    });
+  });
 });

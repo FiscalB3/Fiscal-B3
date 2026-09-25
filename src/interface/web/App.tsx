@@ -7,11 +7,12 @@ import {
   type DashboardJson,
   type MonthlyApurationJson,
   type PositionJson,
+  type TimelineEventJson,
 } from "./api";
 import { AllocationChart, CompareBars, IncomeBars } from "./charts";
 import "./styles.css";
 
-type Tab = "dashboard" | "upload" | "portfolio" | "apuration" | "declaration";
+type Tab = "dashboard" | "timeline" | "upload" | "portfolio" | "apuration" | "declaration";
 
 type LoadState<T> =
   | { status: "idle" }
@@ -27,6 +28,7 @@ export type AppProps = {
 
 const NAV: Array<{ id: Tab; label: string }> = [
   { id: "dashboard", label: "Início" },
+  { id: "timeline", label: "Linha do tempo" },
   { id: "upload", label: "Importar" },
   { id: "portfolio", label: "Carteira" },
   { id: "apuration", label: "Apuração" },
@@ -37,6 +39,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
   const [api] = useState(() => apiProp ?? createApiClient());
   const [tab, setTab] = useState<Tab>(initialTab);
   const [dashboard, setDashboard] = useState<LoadState<DashboardJson>>({ status: "idle" });
+  const [timeline, setTimeline] = useState<LoadState<TimelineEventJson[]>>({ status: "idle" });
   const [portfolio, setPortfolio] = useState<LoadState<PositionJson[]>>({ status: "idle" });
   const [apuration, setApuration] = useState<LoadState<MonthlyApurationJson>>({ status: "idle" });
   const [declaration, setDeclaration] = useState<LoadState<AnnualDeclarationJson>>({ status: "idle" });
@@ -49,6 +52,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
   const [demo, setDemo] = useState<LoadState<string>>({ status: "idle" });
   const [portfolioReload, setPortfolioReload] = useState(0);
   const [dashboardReload, setDashboardReload] = useState(0);
+  const [timelineReload, setTimelineReload] = useState(0);
 
   useEffect(() => {
     if (tab !== "dashboard") return;
@@ -73,6 +77,28 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
       cancelled = true;
     };
   }, [api, tab, month, dashboardReload]);
+
+  useEffect(() => {
+    if (tab !== "timeline") return;
+    let cancelled = false;
+    setTimeline({ status: "loading" });
+    api
+      .getTimeline()
+      .then((data) => {
+        if (cancelled) return;
+        setTimeline(data.length === 0 ? { status: "empty" } : { status: "success", data });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setTimeline({
+          status: "error",
+          message: "Não foi possível carregar a linha do tempo. Tente novamente.",
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [api, tab, timelineReload]);
 
   useEffect(() => {
     if (tab !== "portfolio") return;
@@ -104,6 +130,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
       setTab("dashboard");
       setPortfolioReload((n) => n + 1);
       setDashboardReload((n) => n + 1);
+      setTimelineReload((n) => n + 1);
     } catch {
       setDemo({
         status: "error",
@@ -276,6 +303,40 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
                   </p>
                 </article>
               </div>
+            )}
+          </section>
+        )}
+
+        {tab === "timeline" && (
+          <section className="panel">
+            <h2 className="section-title">Linha do tempo</h2>
+            <p className="section-lead">Operações e eventos em ordem cronológica.</p>
+            {timeline.status === "loading" && (
+              <p className="state" role="status">
+                Carregando linha do tempo…
+              </p>
+            )}
+            {timeline.status === "empty" && (
+              <p className="state state-empty" role="status">
+                Nenhum evento registrado ainda.
+              </p>
+            )}
+            {timeline.status === "error" && (
+              <p className="state state-error" role="alert">
+                {timeline.message}
+              </p>
+            )}
+            {timeline.status === "success" && (
+              <ol className="timeline" data-testid="timeline-list">
+                {timeline.data.map((event) => (
+                  <li key={event.id} className="timeline-item">
+                    <time dateTime={event.date}>{event.date}</time>
+                    <span className="timeline-kind">{event.kind}</span>
+                    <span className="ticker">{event.ticker}</span>
+                    <span className="timeline-summary">{event.summary}</span>
+                  </li>
+                ))}
+              </ol>
             )}
           </section>
         )}

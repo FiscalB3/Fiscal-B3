@@ -263,10 +263,12 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Listagem ordenada (API ou mock)
-- [ ] UI timeline com tipo, ticker, data
-- [ ] Gate: full
-- [ ] Test count: ≥8
+- [x] Listagem ordenada (API ou mock)
+- [x] UI timeline com tipo, ticker, data
+- [x] Gate: full
+- [x] Test count: ≥8
+
+**Status**: ✅ Concluída (4 HTTP + 3 UI)
 
 **Tests**: unit + integration  
 **Gate**: full
@@ -599,7 +601,8 @@ T6.1 → T6.2 → T6.3 → T6.6 → T6.14 → T6.18 → T6.16 → T6.7 → T6.8 
 | T6.1 | ✅ Tema oceano |
 | T6.2 | ✅ Seed demo |
 | T6.3 | ✅ Dashboard KPIs |
-| T6.4–T6.18 | Planejada (expansão apresentação) |
+| T6.4 | ✅ Timeline |
+| T6.5–T6.18 | Planejada (expansão apresentação) |
 
 ---
 

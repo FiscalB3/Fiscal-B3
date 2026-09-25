@@ -2,6 +2,7 @@ import type { GetAnnualDeclaration, AnnualDeclaration } from "../../application/
 import type { GetDashboard, DashboardSummary } from "../../application/ports/GetDashboard";
 import type { GetMonthlyApuration, MonthlyApuration } from "../../application/ports/GetMonthlyApuration";
 import type { GetPortfolio } from "../../application/ports/GetPortfolio";
+import type { GetTimeline, TimelineEvent } from "../../application/ports/GetTimeline";
 import type { ImportOperations } from "../../application/ports/ImportOperations";
 import type { ResetDemo, ResetDemoResult } from "../../application/ports/ResetDemo";
 import { Money } from "../../domain/money/Money";
@@ -10,7 +11,6 @@ import type { AppPorts } from "./createApp";
 
 const EXEMPTION_LIMIT_CENTS = 2_000_000;
 
-/** Baseline sample (3 tickers) used when demo is not loaded. */
 const samplePortfolio: readonly PositionSnapshot[] = [
   {
     ticker: "PETR4",
@@ -32,7 +32,6 @@ const samplePortfolio: readonly PositionSnapshot[] = [
   },
 ];
 
-/** Deterministic presentation seed: ≥5 tickers, FII, day+swing, provento. */
 export const DEMO_PORTFOLIO: readonly PositionSnapshot[] = [
   {
     ticker: "PETR4",
@@ -98,10 +97,91 @@ const SAMPLE_RENDIMENTOS: AnnualDeclaration["rendimentos"] = [
   { kind: "RENDIMENTO_FII", amount: Money.fromReais("180.00") },
 ];
 
-/** Sample month: R$ 8.500 of swing equity sales toward the R$ 20.000 limit. */
 const SAMPLE_EXEMPTION_USED_CENTS = 850_000;
-/** Demo month: R$ 18.200 — near the ceiling for presentation. */
 const DEMO_EXEMPTION_USED_CENTS = 1_820_000;
+
+const SAMPLE_TIMELINE: readonly TimelineEvent[] = [
+  {
+    id: "s1",
+    date: "2024-01-10",
+    kind: "BUY",
+    ticker: "PETR4",
+    summary: "Compra de 100 PETR4",
+  },
+  {
+    id: "s2",
+    date: "2024-02-05",
+    kind: "BUY",
+    ticker: "VALE3",
+    summary: "Compra de 40 VALE3",
+  },
+  {
+    id: "s3",
+    date: "2024-03-12",
+    kind: "SELL",
+    ticker: "PETR4",
+    summary: "Venda swing de 20 PETR4",
+  },
+];
+
+const DEMO_TIMELINE: readonly TimelineEvent[] = [
+  {
+    id: "d1",
+    date: "2024-01-08",
+    kind: "BUY",
+    ticker: "PETR4",
+    summary: "Compra de 200 PETR4",
+  },
+  {
+    id: "d2",
+    date: "2024-01-08",
+    kind: "DAY_TRADE",
+    ticker: "PETR4",
+    summary: "Day trade de 50 PETR4",
+  },
+  {
+    id: "d3",
+    date: "2024-01-22",
+    kind: "BUY",
+    ticker: "HGLG11",
+    summary: "Compra de 20 HGLG11",
+  },
+  {
+    id: "d4",
+    date: "2024-02-14",
+    kind: "BUY",
+    ticker: "ITUB4",
+    summary: "Compra de 150 ITUB4",
+  },
+  {
+    id: "d5",
+    date: "2024-02-28",
+    kind: "SPLIT",
+    ticker: "BBAS3",
+    summary: "Desdobramento 1:2 em BBAS3",
+  },
+  {
+    id: "d6",
+    date: "2024-03-05",
+    kind: "SELL",
+    ticker: "VALE3",
+    summary: "Venda swing de 20 VALE3",
+  },
+  {
+    id: "d7",
+    date: "2024-03-15",
+    kind: "RENDIMENTO_FII",
+    ticker: "MXRF11",
+    summary: "Rendimento FII de MXRF11",
+  },
+  {
+    id: "d8",
+    date: "2024-03-20",
+    kind: "DIVIDENDO",
+    ticker: "ITUB4",
+    summary: "Dividendo de ITUB4",
+  },
+];
 
 function clonePortfolio(rows: readonly PositionSnapshot[]): PositionSnapshot[] {
   return rows.map((row) => ({
@@ -119,11 +199,17 @@ function sumAcquisitionCost(rows: readonly PositionSnapshot[]): Money {
   );
 }
 
+function cloneTimeline(events: readonly TimelineEvent[]): TimelineEvent[] {
+  return events.map((event) => ({ ...event }));
+}
+
 export function createMockPorts(options?: {
   portfolio?: readonly PositionSnapshot[];
   importOk?: boolean;
+  timeline?: readonly TimelineEvent[];
 }): AppPorts {
   let portfolio = clonePortfolio(options?.portfolio ?? samplePortfolio);
+  let timeline = cloneTimeline(options?.timeline ?? SAMPLE_TIMELINE);
   let demoActive = false;
   const importOk = options?.importOk ?? true;
 
@@ -186,9 +272,16 @@ export function createMockPorts(options?: {
     },
   };
 
+  const getTimeline: GetTimeline = {
+    async execute() {
+      return [...timeline].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+    },
+  };
+
   const resetDemo: ResetDemo = {
     async execute(): Promise<ResetDemoResult> {
       portfolio = clonePortfolio(DEMO_PORTFOLIO);
+      timeline = cloneTimeline(DEMO_TIMELINE);
       demoActive = true;
       return {
         ok: true,
@@ -206,6 +299,7 @@ export function createMockPorts(options?: {
     getMonthlyApuration,
     getAnnualDeclaration,
     getDashboard,
+    getTimeline,
     resetDemo,
   };
 }

@@ -38,9 +38,18 @@ export type DashboardJson = {
   exemptionPercentUsed: number;
 };
 
+export type TimelineEventJson = {
+  id: string;
+  date: string;
+  kind: string;
+  ticker: string;
+  summary: string;
+};
+
 export type ApiClient = {
   getPortfolio(): Promise<PositionJson[]>;
   getDashboard(month: string): Promise<DashboardJson>;
+  getTimeline(): Promise<TimelineEventJson[]>;
   getApuration(month: string): Promise<MonthlyApurationJson>;
   getDeclaration(year: number): Promise<AnnualDeclarationJson>;
   importFile(file: File): Promise<{ ok: true } | { ok: false; errors: Array<{ line: number; message: string }> }>;
@@ -63,6 +72,14 @@ export function createApiClient(baseUrl = ""): ApiClient {
         throw new Error("Failed to load dashboard");
       }
       return (await res.json()) as DashboardJson;
+    },
+
+    async getTimeline() {
+      const res = await fetch(`${baseUrl}/timeline`);
+      if (!res.ok) {
+        throw new Error("Failed to load timeline");
+      }
+      return (await res.json()) as TimelineEventJson[];
     },
 
     async getApuration(month: string) {
