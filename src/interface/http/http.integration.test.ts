@@ -353,4 +353,29 @@ describe("HTTP API", () => {
     expect(res.body.buckets[0].tax.cents).toBe(42000);
     expect(res.body.buckets[1].tax.cents).toBe(8000);
   });
+
+  it("GET /loss-carryforward returns day and swing series", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).get("/loss-carryforward").query({ year: "2024" });
+    expect(res.status).toBe(200);
+    expect(res.body.points).toEqual([
+      { month: "2024-01", dayTrade: { cents: 50000 }, swing: { cents: 20000 } },
+      { month: "2024-02", dayTrade: { cents: 45000 }, swing: { cents: 0 } },
+      { month: "2024-03", dayTrade: { cents: 40000 }, swing: { cents: 0 } },
+    ]);
+  });
+
+  it("GET /loss-carryforward with invalid year returns 400", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).get("/loss-carryforward").query({ year: "x" });
+    expect(res.status).toBe(400);
+  });
+
+  it("GET /loss-carryforward after demo shows separate evolving balances", async () => {
+    const app = createApp(createMockPorts());
+    await request(app).post("/demo/reset");
+    const res = await request(app).get("/loss-carryforward").query({ year: "2024" });
+    expect(res.body.points.length).toBeGreaterThanOrEqual(3);
+    expect(res.body.points[0].dayTrade.cents).not.toBe(res.body.points[0].swing.cents);
+  });
 });

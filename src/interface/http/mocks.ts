@@ -1,6 +1,7 @@
 import type { GetAnnualDeclaration, AnnualDeclaration } from "../../application/ports/GetAnnualDeclaration";
 import type { GetDarfCalendar, DarfObligation } from "../../application/ports/GetDarfCalendar";
 import type { GetDashboard, DashboardSummary } from "../../application/ports/GetDashboard";
+import type { GetLossCarryforward, LossCarryforwardSeries } from "../../application/ports/GetLossCarryforward";
 import type { GetModalityBreakdown, ModalityBreakdown } from "../../application/ports/GetModalityBreakdown";
 import type { GetMonthlyApuration, MonthlyApuration } from "../../application/ports/GetMonthlyApuration";
 import type { GetPortfolio } from "../../application/ports/GetPortfolio";
@@ -122,13 +123,54 @@ const DEMO_MODALITY: ModalityBreakdown["buckets"] = [
     modality: "SWING",
     result: Money.fromReais("2800.00"),
     tax: Money.fromReais("420.00"),
-    lossCarryforward: Money.fromReais("0.00"),
+    lossCarryforward: Money.fromReais("150.00"),
   },
   {
     modality: "DAY_TRADE",
     result: Money.fromReais("400.00"),
     tax: Money.fromReais("80.00"),
     lossCarryforward: Money.fromReais("150.00"),
+  },
+];
+
+const SAMPLE_LOSS_SERIES: LossCarryforwardSeries["points"] = [
+  {
+    month: "2024-01",
+    dayTrade: Money.fromReais("500.00"),
+    swing: Money.fromReais("200.00"),
+  },
+  {
+    month: "2024-02",
+    dayTrade: Money.fromReais("450.00"),
+    swing: Money.fromReais("0.00"),
+  },
+  {
+    month: "2024-03",
+    dayTrade: Money.fromReais("400.00"),
+    swing: Money.fromReais("0.00"),
+  },
+];
+
+const DEMO_LOSS_SERIES: LossCarryforwardSeries["points"] = [
+  {
+    month: "2024-01",
+    dayTrade: Money.fromReais("300.00"),
+    swing: Money.fromReais("800.00"),
+  },
+  {
+    month: "2024-02",
+    dayTrade: Money.fromReais("200.00"),
+    swing: Money.fromReais("400.00"),
+  },
+  {
+    month: "2024-03",
+    dayTrade: Money.fromReais("150.00"),
+    swing: Money.fromReais("150.00"),
+  },
+  {
+    month: "2024-04",
+    dayTrade: Money.fromReais("100.00"),
+    swing: Money.fromReais("0.00"),
   },
 ];
 
@@ -258,6 +300,16 @@ function cloneModalityBuckets(
   }));
 }
 
+function cloneLossSeries(
+  points: LossCarryforwardSeries["points"],
+): LossCarryforwardSeries["points"] {
+  return points.map((p) => ({
+    month: p.month,
+    dayTrade: Money.fromCents(p.dayTrade.toCents()),
+    swing: Money.fromCents(p.swing.toCents()),
+  }));
+}
+
 export function createMockPorts(options?: {
   portfolio?: readonly PositionSnapshot[];
   importOk?: boolean;
@@ -268,6 +320,7 @@ export function createMockPorts(options?: {
   let timeline = cloneTimeline(options?.timeline ?? SAMPLE_TIMELINE);
   let darfMonths = [...(options?.darfMonths ?? SAMPLE_DARF_MONTHS)];
   let modalityBuckets = cloneModalityBuckets(SAMPLE_MODALITY);
+  let lossSeries = cloneLossSeries(SAMPLE_LOSS_SERIES);
   let demoActive = false;
   const importOk = options?.importOk ?? true;
 
@@ -361,12 +414,23 @@ export function createMockPorts(options?: {
     },
   };
 
+  const getLossCarryforward: GetLossCarryforward = {
+    async execute(input): Promise<LossCarryforwardSeries> {
+      const year = input?.year;
+      const points = cloneLossSeries(lossSeries).filter((p) =>
+        year === undefined ? true : p.month.startsWith(`${year}-`),
+      );
+      return { points };
+    },
+  };
+
   const resetDemo: ResetDemo = {
     async execute(): Promise<ResetDemoResult> {
       portfolio = clonePortfolio(DEMO_PORTFOLIO);
       timeline = cloneTimeline(DEMO_TIMELINE);
       darfMonths = [...DEMO_DARF_MONTHS];
       modalityBuckets = cloneModalityBuckets(DEMO_MODALITY);
+      lossSeries = cloneLossSeries(DEMO_LOSS_SERIES);
       demoActive = true;
       return {
         ok: true,
@@ -387,6 +451,7 @@ export function createMockPorts(options?: {
     getTimeline,
     getDarfCalendar,
     getModalityBreakdown,
+    getLossCarryforward,
     resetDemo,
   };
 }

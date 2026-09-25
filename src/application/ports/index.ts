@@ -4,6 +4,7 @@ export type { GetDashboard, DashboardSummary } from "./GetDashboard";
 export type { GetTimeline, TimelineEvent, TimelineEventKind } from "./GetTimeline";
 export type { GetDarfCalendar, DarfObligation } from "./GetDarfCalendar";
 export type { GetModalityBreakdown, ModalityBreakdown, ModalityBucket } from "./GetModalityBreakdown";
+export type { GetLossCarryforward, LossCarryforwardSeries, LossCarryforwardPoint } from "./GetLossCarryforward";
 export type { ResetDemo, ResetDemoResult } from "./ResetDemo";
 export type { GetPortfolio } from "./GetPortfolio";
 export type { ImportOperations, ImportResult, ImportSource, ImportLineError } from "./ImportOperations";

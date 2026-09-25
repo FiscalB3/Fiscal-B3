@@ -43,6 +43,7 @@ function mockApi(overrides: Partial<ApiClient> = {}): ApiClient {
         },
       ],
     }),
+    getLossCarryforward: vi.fn().mockResolvedValue({ points: [] }),
     getApuration: vi.fn(),
     getDeclaration: vi.fn(),
     importFile: vi.fn(),
@@ -290,5 +291,25 @@ describe("Web UI", () => {
     expect(screen.getByText("Swing trade")).toBeInTheDocument();
     expect(screen.getByText("Day trade")).toBeInTheDocument();
     expect(screen.getByText("R$ 400,00")).toBeInTheDocument();
+  });
+
+  it("shows loss carryforward evolution with separate modalities", async () => {
+    render(
+      <App
+        api={mockApi({
+          getLossCarryforward: vi.fn().mockResolvedValue({
+            points: [
+              { month: "2024-01", dayTrade: { cents: 50000 }, swing: { cents: 20000 } },
+              { month: "2024-03", dayTrade: { cents: 40000 }, swing: { cents: 0 } },
+            ],
+          }),
+        })}
+        initialTab="losses"
+      />,
+    );
+    expect(await screen.findByTestId("loss-carryforward")).toBeInTheDocument();
+    expect(screen.getByText("2024-01")).toBeInTheDocument();
+    expect(screen.getByText("R$ 500,00")).toBeInTheDocument();
+    expect(screen.getByText("R$ 200,00")).toBeInTheDocument();
   });
 });

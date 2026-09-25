@@ -3,6 +3,7 @@ import multer from "multer";
 import type { GetAnnualDeclaration } from "../../application/ports/GetAnnualDeclaration";
 import type { GetDarfCalendar } from "../../application/ports/GetDarfCalendar";
 import type { GetDashboard } from "../../application/ports/GetDashboard";
+import type { GetLossCarryforward } from "../../application/ports/GetLossCarryforward";
 import type { GetModalityBreakdown } from "../../application/ports/GetModalityBreakdown";
 import type { GetMonthlyApuration } from "../../application/ports/GetMonthlyApuration";
 import type { GetPortfolio } from "../../application/ports/GetPortfolio";
@@ -26,6 +27,7 @@ export type AppPorts = {
   getTimeline: GetTimeline;
   getDarfCalendar: GetDarfCalendar;
   getModalityBreakdown: GetModalityBreakdown;
+  getLossCarryforward: GetLossCarryforward;
   resetDemo: ResetDemo;
 };
 
@@ -121,6 +123,32 @@ export function createApp(ports: AppPorts): Express {
           result: serializeMoney(bucket.result),
           tax: serializeMoney(bucket.tax),
           lossCarryforward: serializeMoney(bucket.lossCarryforward),
+        })),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/loss-carryforward", async (req, res, next) => {
+    try {
+      const rawYear = typeof req.query.year === "string" ? req.query.year : undefined;
+      let year: number | undefined;
+      if (rawYear !== undefined) {
+        year = Number.parseInt(rawYear, 10);
+        if (!Number.isInteger(year) || year < 1900 || year > 2100) {
+          res.status(400).json({ error: "Query parameter year must be a valid year" });
+          return;
+        }
+      }
+      const series = await ports.getLossCarryforward.execute(
+        year === undefined ? undefined : { year },
+      );
+      res.status(200).json({
+        points: series.points.map((point) => ({
+          month: point.month,
+          dayTrade: serializeMoney(point.dayTrade),
+          swing: serializeMoney(point.swing),
         })),
       });
     } catch (error) {

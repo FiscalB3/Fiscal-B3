@@ -6,6 +6,7 @@ import {
   type ApiClient,
   type DashboardJson,
   type DarfObligationJson,
+  type LossCarryforwardJson,
   type ModalityBreakdownJson,
   type MonthlyApurationJson,
   type PositionJson,
@@ -14,7 +15,15 @@ import {
 import { AllocationChart, CompareBars, IncomeBars } from "./charts";
 import "./styles.css";
 
-type Tab = "dashboard" | "timeline" | "darf" | "upload" | "portfolio" | "apuration" | "declaration";
+type Tab =
+  | "dashboard"
+  | "timeline"
+  | "darf"
+  | "losses"
+  | "upload"
+  | "portfolio"
+  | "apuration"
+  | "declaration";
 
 type LoadState<T> =
   | { status: "idle" }
@@ -32,6 +41,7 @@ const NAV: Array<{ id: Tab; label: string }> = [
   { id: "dashboard", label: "Início" },
   { id: "timeline", label: "Linha do tempo" },
   { id: "darf", label: "DARF" },
+  { id: "losses", label: "Prejuízos" },
   { id: "upload", label: "Importar" },
   { id: "portfolio", label: "Carteira" },
   { id: "apuration", label: "Apuração" },
@@ -45,6 +55,9 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
   const [modality, setModality] = useState<LoadState<ModalityBreakdownJson>>({ status: "idle" });
   const [timeline, setTimeline] = useState<LoadState<TimelineEventJson[]>>({ status: "idle" });
   const [darfCalendar, setDarfCalendar] = useState<LoadState<DarfObligationJson[]>>({
+    status: "idle",
+  });
+  const [losses, setLosses] = useState<LoadState<LossCarryforwardJson>>({
     status: "idle",
   });
   const [portfolio, setPortfolio] = useState<LoadState<PositionJson[]>>({ status: "idle" });
@@ -61,6 +74,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
   const [dashboardReload, setDashboardReload] = useState(0);
   const [timelineReload, setTimelineReload] = useState(0);
   const [darfReload, setDarfReload] = useState(0);
+  const [lossesReload, setLossesReload] = useState(0);
 
   useEffect(() => {
     if (tab !== "dashboard") return;
@@ -145,6 +159,28 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
   }, [api, tab, year, darfReload]);
 
   useEffect(() => {
+    if (tab !== "losses") return;
+    let cancelled = false;
+    setLosses({ status: "loading" });
+    api
+      .getLossCarryforward(Number.parseInt(year, 10))
+      .then((data) => {
+        if (cancelled) return;
+        setLosses(data.points.length === 0 ? { status: "empty" } : { status: "success", data });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLosses({
+          status: "error",
+          message: "Não foi possível carregar a evolução de prejuízos.",
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [api, tab, year, lossesReload]);
+
+  useEffect(() => {
     if (tab !== "portfolio") return;
     let cancelled = false;
     setPortfolio({ status: "loading" });
@@ -176,6 +212,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
       setDashboardReload((n) => n + 1);
       setTimelineReload((n) => n + 1);
       setDarfReload((n) => n + 1);
+      setLossesReload((n) => n + 1);
     } catch {
       setDemo({
         status: "error",
@@ -476,6 +513,54 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
                         <td>{row.month}</td>
                         <td>{formatCents(row.darf.cents)}</td>
                         <td>{row.dueDate}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
+
+        {tab === "losses" && (
+          <section className="panel">
+            <h2 className="section-title">Prejuízos a compensar</h2>
+            <p className="section-lead">Evolução mensal separada por day trade e swing.</p>
+            <div className="field">
+              <label htmlFor="losses-year">Ano</label>
+              <input
+                id="losses-year"
+                type="number"
+                value={year}
+                onChange={(event) => setYear(event.target.value)}
+              />
+            </div>
+            {losses.status === "empty" && (
+              <p className="state state-empty" role="status">
+                Nenhum prejuízo acumulado neste ano.
+              </p>
+            )}
+            {losses.status === "error" && (
+              <p className="state state-error" role="alert">
+                {losses.message}
+              </p>
+            )}
+            {losses.status === "success" && (
+              <div className="table-wrap">
+                <table className="table" data-testid="loss-carryforward">
+                  <thead>
+                    <tr>
+                      <th>Mês</th>
+                      <th>Day trade</th>
+                      <th>Swing</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {losses.data.points.map((row) => (
+                      <tr key={row.month}>
+                        <td>{row.month}</td>
+                        <td>{formatCents(row.dayTrade.cents)}</td>
+                        <td>{formatCents(row.swing.cents)}</td>
                       </tr>
                     ))}
                   </tbody>

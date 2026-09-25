@@ -66,12 +66,23 @@ export type ModalityBreakdownJson = {
   buckets: ModalityBucketJson[];
 };
 
+export type LossCarryforwardPointJson = {
+  month: string;
+  dayTrade: MoneyJson;
+  swing: MoneyJson;
+};
+
+export type LossCarryforwardJson = {
+  points: LossCarryforwardPointJson[];
+};
+
 export type ApiClient = {
   getPortfolio(): Promise<PositionJson[]>;
   getDashboard(month: string): Promise<DashboardJson>;
   getTimeline(): Promise<TimelineEventJson[]>;
   getDarfCalendar(year?: number): Promise<DarfObligationJson[]>;
   getModalityBreakdown(month: string): Promise<ModalityBreakdownJson>;
+  getLossCarryforward(year?: number): Promise<LossCarryforwardJson>;
   getApuration(month: string): Promise<MonthlyApurationJson>;
   getDeclaration(year: number): Promise<AnnualDeclarationJson>;
   importFile(file: File): Promise<{ ok: true } | { ok: false; errors: Array<{ line: number; message: string }> }>;
@@ -121,6 +132,15 @@ export function createApiClient(baseUrl = ""): ApiClient {
         throw new Error("Failed to load modality breakdown");
       }
       return (await res.json()) as ModalityBreakdownJson;
+    },
+
+    async getLossCarryforward(year?: number) {
+      const query = year === undefined ? "" : `?year=${encodeURIComponent(String(year))}`;
+      const res = await fetch(`${baseUrl}/loss-carryforward${query}`);
+      if (!res.ok) {
+        throw new Error("Failed to load loss carryforward");
+      }
+      return (await res.json()) as LossCarryforwardJson;
     },
 
     async getApuration(month: string) {
