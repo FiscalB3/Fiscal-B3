@@ -1,12 +1,14 @@
 import express, { type Express, type Request, type Response } from "express";
 import multer from "multer";
 import type { GetAnnualDeclaration } from "../../application/ports/GetAnnualDeclaration";
+import type { GetDashboard } from "../../application/ports/GetDashboard";
 import type { GetMonthlyApuration } from "../../application/ports/GetMonthlyApuration";
 import type { GetPortfolio } from "../../application/ports/GetPortfolio";
 import type { ImportOperations } from "../../application/ports/ImportOperations";
 import type { ResetDemo } from "../../application/ports/ResetDemo";
 import {
   serializeAnnualDeclaration,
+  serializeDashboard,
   serializeMonthlyApuration,
   serializePosition,
 } from "./serialize";
@@ -16,6 +18,7 @@ export type AppPorts = {
   getPortfolio: GetPortfolio;
   getMonthlyApuration: GetMonthlyApuration;
   getAnnualDeclaration: GetAnnualDeclaration;
+  getDashboard: GetDashboard;
   resetDemo: ResetDemo;
 };
 
@@ -44,6 +47,20 @@ export function createApp(ports: AppPorts): Express {
     try {
       const positions = await ports.getPortfolio.execute();
       res.status(200).json(positions.map(serializePosition));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/dashboard", async (req, res, next) => {
+    try {
+      const month = typeof req.query.month === "string" ? req.query.month : "";
+      if (!MONTH_PATTERN.test(month)) {
+        res.status(400).json({ error: "Query parameter month is required as YYYY-MM" });
+        return;
+      }
+      const summary = await ports.getDashboard.execute({ month });
+      res.status(200).json(serializeDashboard(summary));
     } catch (error) {
       next(error);
     }

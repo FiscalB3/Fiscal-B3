@@ -1,4 +1,5 @@
 import type { GetAnnualDeclaration, AnnualDeclaration } from "../../application/ports/GetAnnualDeclaration";
+import type { GetDashboard, DashboardSummary } from "../../application/ports/GetDashboard";
 import type { GetMonthlyApuration, MonthlyApuration } from "../../application/ports/GetMonthlyApuration";
 import type { GetPortfolio } from "../../application/ports/GetPortfolio";
 import type { ImportOperations } from "../../application/ports/ImportOperations";
@@ -6,6 +7,8 @@ import type { ResetDemo, ResetDemoResult } from "../../application/ports/ResetDe
 import { Money } from "../../domain/money/Money";
 import type { PositionSnapshot } from "../../domain/position/PositionSnapshot";
 import type { AppPorts } from "./createApp";
+
+const EXEMPTION_LIMIT_CENTS = 2_000_000;
 
 /** Baseline sample (3 tickers) used when demo is not loaded. */
 const samplePortfolio: readonly PositionSnapshot[] = [
@@ -95,13 +98,25 @@ const SAMPLE_RENDIMENTOS: AnnualDeclaration["rendimentos"] = [
   { kind: "RENDIMENTO_FII", amount: Money.fromReais("180.00") },
 ];
 
+/** Sample month: R$ 8.500 of swing equity sales toward the R$ 20.000 limit. */
+const SAMPLE_EXEMPTION_USED_CENTS = 850_000;
+/** Demo month: R$ 18.200 — near the ceiling for presentation. */
+const DEMO_EXEMPTION_USED_CENTS = 1_820_000;
+
 function clonePortfolio(rows: readonly PositionSnapshot[]): PositionSnapshot[] {
   return rows.map((row) => ({
     ticker: row.ticker,
     quantity: row.quantity,
-    averagePrice: Money.fromCents(row.averagePrice.cents),
-    acquisitionCost: Money.fromCents(row.acquisitionCost.cents),
+    averagePrice: Money.fromCents(row.averagePrice.toCents()),
+    acquisitionCost: Money.fromCents(row.acquisitionCost.toCents()),
   }));
+}
+
+function sumAcquisitionCost(rows: readonly PositionSnapshot[]): Money {
+  return rows.reduce(
+    (total, row) => total.add(Money.fromCents(row.acquisitionCost.toCents())),
+    Money.fromCents(0),
+  );
 }
 
 export function createMockPorts(options?: {
@@ -132,9 +147,9 @@ export function createMockPorts(options?: {
       const base = demoActive ? DEMO_APURATION_BASE : SAMPLE_APURATION_BASE;
       return {
         month,
-        result: Money.fromCents(base.result.cents),
-        exemptionApplied: Money.fromCents(base.exemptionApplied.cents),
-        darf: Money.fromCents(base.darf.cents),
+        result: Money.fromCents(base.result.toCents()),
+        exemptionApplied: Money.fromCents(base.exemptionApplied.toCents()),
+        darf: Money.fromCents(base.darf.toCents()),
       };
     },
   };
@@ -147,8 +162,26 @@ export function createMockPorts(options?: {
         bensEDireitos: clonePortfolio(portfolio),
         rendimentos: rendimentos.map((line) => ({
           kind: line.kind,
-          amount: Money.fromCents(line.amount.cents),
+          amount: Money.fromCents(line.amount.toCents()),
         })),
+      };
+    },
+  };
+
+  const getDashboard: GetDashboard = {
+    async execute({ month }): Promise<DashboardSummary> {
+      const apuration = await getMonthlyApuration.execute({ month });
+      const used = demoActive ? DEMO_EXEMPTION_USED_CENTS : SAMPLE_EXEMPTION_USED_CENTS;
+      const percent =
+        EXEMPTION_LIMIT_CENTS === 0 ? 0 : Math.round((used / EXEMPTION_LIMIT_CENTS) * 1000) / 10;
+      return {
+        month,
+        investedCost: sumAcquisitionCost(portfolio),
+        assetCount: portfolio.length,
+        monthDarf: Money.fromCents(apuration.darf.toCents()),
+        exemptionUsedCents: used,
+        exemptionLimitCents: EXEMPTION_LIMIT_CENTS,
+        exemptionPercentUsed: percent,
       };
     },
   };
@@ -172,6 +205,7 @@ export function createMockPorts(options?: {
     getPortfolio,
     getMonthlyApuration,
     getAnnualDeclaration,
+    getDashboard,
     resetDemo,
   };
 }

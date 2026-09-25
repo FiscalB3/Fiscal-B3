@@ -241,11 +241,13 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Dashboard é entrada padrão
-- [ ] KPIs vêm da API/ports (sem regra fiscal no React)
-- [ ] Vazio/loading/erro
-- [ ] Gate: full
-- [ ] Test count: ≥8
+- [x] Dashboard é entrada padrão
+- [x] KPIs vêm da API/ports (sem regra fiscal no React)
+- [x] Vazio/loading/erro
+- [x] Gate: full
+- [x] Test count: ≥8
+
+**Status**: ✅ Concluída (4 HTTP + 4 UI dashboard)
 
 **Tests**: unit + integration  
 **Gate**: full
@@ -596,7 +598,8 @@ T6.1 → T6.2 → T6.3 → T6.6 → T6.14 → T6.18 → T6.16 → T6.7 → T6.8 
 | T5, T7 | Pendente |
 | T6.1 | ✅ Tema oceano |
 | T6.2 | ✅ Seed demo |
-| T6.3–T6.18 | Planejada (expansão apresentação) |
+| T6.3 | ✅ Dashboard KPIs |
+| T6.4–T6.18 | Planejada (expansão apresentação) |
 
 ---
 

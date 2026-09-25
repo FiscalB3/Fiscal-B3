@@ -28,8 +28,19 @@ export type DemoResetJson = {
   hasProvento: true;
 };
 
+export type DashboardJson = {
+  month: string;
+  investedCost: MoneyJson;
+  assetCount: number;
+  monthDarf: MoneyJson;
+  exemptionUsedCents: number;
+  exemptionLimitCents: number;
+  exemptionPercentUsed: number;
+};
+
 export type ApiClient = {
   getPortfolio(): Promise<PositionJson[]>;
+  getDashboard(month: string): Promise<DashboardJson>;
   getApuration(month: string): Promise<MonthlyApurationJson>;
   getDeclaration(year: number): Promise<AnnualDeclarationJson>;
   importFile(file: File): Promise<{ ok: true } | { ok: false; errors: Array<{ line: number; message: string }> }>;
@@ -44,6 +55,14 @@ export function createApiClient(baseUrl = ""): ApiClient {
         throw new Error("Failed to load portfolio");
       }
       return (await res.json()) as PositionJson[];
+    },
+
+    async getDashboard(month: string) {
+      const res = await fetch(`${baseUrl}/dashboard?month=${encodeURIComponent(month)}`);
+      if (!res.ok) {
+        throw new Error("Failed to load dashboard");
+      }
+      return (await res.json()) as DashboardJson;
     },
 
     async getApuration(month: string) {

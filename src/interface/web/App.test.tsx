@@ -2,11 +2,26 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { App } from "./App";
-import type { ApiClient } from "./api";
+import type { ApiClient, DashboardJson } from "./api";
+
+const sampleDashboard: DashboardJson = {
+  month: "2024-03",
+  investedCost: { cents: 773400 },
+  assetCount: 3,
+  monthDarf: { cents: 22500 },
+  exemptionUsedCents: 850000,
+  exemptionLimitCents: 2000000,
+  exemptionPercentUsed: 42.5,
+};
 
 function mockApi(overrides: Partial<ApiClient> = {}): ApiClient {
   return {
     getPortfolio: vi.fn().mockResolvedValue([]),
+    getDashboard: vi.fn().mockResolvedValue({
+      ...sampleDashboard,
+      assetCount: 0,
+      investedCost: { cents: 0 },
+    }),
     getApuration: vi.fn(),
     getDeclaration: vi.fn(),
     importFile: vi.fn(),
@@ -22,8 +37,51 @@ function mockApi(overrides: Partial<ApiClient> = {}): ApiClient {
 }
 
 describe("Web UI", () => {
+  it("opens on dashboard by default", async () => {
+    render(<App api={mockApi({ getDashboard: vi.fn().mockResolvedValue(sampleDashboard) })} />);
+    expect(await screen.findByTestId("dashboard-kpis")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Início" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("shows dashboard KPIs from API", async () => {
+    render(<App api={mockApi({ getDashboard: vi.fn().mockResolvedValue(sampleDashboard) })} />);
+    expect(await screen.findByText("Custo investido")).toBeInTheDocument();
+    expect(screen.getByText("R$ 7734,00")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText("R$ 225,00")).toBeInTheDocument();
+    expect(screen.getByText("42.5%")).toBeInTheDocument();
+  });
+
+  it("shows empty dashboard state", async () => {
+    render(
+      <App
+        api={mockApi({
+          getDashboard: vi.fn().mockResolvedValue({
+            ...sampleDashboard,
+            assetCount: 0,
+            investedCost: { cents: 0 },
+          }),
+        })}
+      />,
+    );
+    expect(
+      await screen.findByText(
+        "Você ainda não possui posições. Importe operações ou carregue a demonstração.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("shows dashboard error", async () => {
+    render(
+      <App api={mockApi({ getDashboard: vi.fn().mockRejectedValue(new Error("Failed to load dashboard")) })} />,
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Não foi possível carregar o resumo. Tente novamente em instantes.",
+    );
+  });
+
   it("shows empty portfolio state", async () => {
-    render(<App api={mockApi({ getPortfolio: vi.fn().mockResolvedValue([]) })} />);
+    render(<App api={mockApi({ getPortfolio: vi.fn().mockResolvedValue([]) })} initialTab="portfolio" />);
     expect(await screen.findByRole("status")).toHaveTextContent(
       "Você ainda não possui posições. Importe suas operações para começar.",
     );
@@ -42,6 +100,7 @@ describe("Web UI", () => {
             },
           ]),
         })}
+        initialTab="portfolio"
       />,
     );
     expect((await screen.findAllByText("PETR4")).length).toBeGreaterThan(0);
@@ -50,7 +109,10 @@ describe("Web UI", () => {
 
   it("shows portfolio error", async () => {
     render(
-      <App api={mockApi({ getPortfolio: vi.fn().mockRejectedValue(new Error("Failed to load portfolio")) })} />,
+      <App
+        api={mockApi({ getPortfolio: vi.fn().mockRejectedValue(new Error("Failed to load portfolio")) })}
+        initialTab="portfolio"
+      />,
     );
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Não foi possível carregar sua carteira. Tente novamente em instantes.",
@@ -84,7 +146,7 @@ describe("Web UI", () => {
     });
   });
 
-  it("loads demonstration portfolio from Carregar demonstração", async () => {
+  it("loads demonstration and shows dashboard KPIs", async () => {
     const user = userEvent.setup();
     const resetDemo = vi.fn().mockResolvedValue({
       ok: true,
@@ -93,33 +155,35 @@ describe("Web UI", () => {
       hasFii: true,
       hasProvento: true,
     });
-    const getPortfolio = vi
+    const getDashboard = vi
       .fn()
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([
-        {
-          ticker: "PETR4",
-          quantity: 200,
-          averagePrice: { cents: 3000 },
-          acquisitionCost: { cents: 600000 },
-        },
-        {
-          ticker: "HGLG11",
-          quantity: 20,
-          averagePrice: { cents: 16500 },
-          acquisitionCost: { cents: 330000 },
-        },
-      ]);
-    render(<App api={mockApi({ resetDemo, getPortfolio })} />);
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      "Você ainda não possui posições. Importe suas operações para começar.",
-    );
+      .mockResolvedValueOnce({
+        ...sampleDashboard,
+        assetCount: 0,
+        investedCost: { cents: 0 },
+      })
+      .mockResolvedValueOnce({
+        month: "2024-03",
+        investedCost: { cents: 2245000 },
+        assetCount: 6,
+        monthDarf: { cents: 48000 },
+        exemptionUsedCents: 1820000,
+        exemptionLimitCents: 2000000,
+        exemptionPercentUsed: 91,
+      });
+    render(<App api={mockApi({ resetDemo, getDashboard })} />);
+    expect(
+      await screen.findByText(
+        "Você ainda não possui posições. Importe operações ou carregue a demonstração.",
+      ),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Carregar demonstração" }));
     await waitFor(() => {
       expect(resetDemo).toHaveBeenCalledTimes(1);
     });
     expect(await screen.findByText("Carteira de demonstração carregada.")).toBeInTheDocument();
-    expect((await screen.findAllByText("PETR4")).length).toBeGreaterThan(0);
-    expect((await screen.findAllByText("HGLG11")).length).toBeGreaterThan(0);
+    expect(await screen.findByTestId("dashboard-kpis")).toBeInTheDocument();
+    expect(screen.getByText("6")).toBeInTheDocument();
+    expect(screen.getByText("91%")).toBeInTheDocument();
   });
 });

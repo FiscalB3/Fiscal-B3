@@ -4,13 +4,14 @@ import {
   formatCents,
   type AnnualDeclarationJson,
   type ApiClient,
+  type DashboardJson,
   type MonthlyApurationJson,
   type PositionJson,
 } from "./api";
 import { AllocationChart, CompareBars, IncomeBars } from "./charts";
 import "./styles.css";
 
-type Tab = "upload" | "portfolio" | "apuration" | "declaration";
+type Tab = "dashboard" | "upload" | "portfolio" | "apuration" | "declaration";
 
 type LoadState<T> =
   | { status: "idle" }
@@ -25,15 +26,17 @@ export type AppProps = {
 };
 
 const NAV: Array<{ id: Tab; label: string }> = [
+  { id: "dashboard", label: "Início" },
   { id: "upload", label: "Importar" },
   { id: "portfolio", label: "Carteira" },
   { id: "apuration", label: "Apuração" },
   { id: "declaration", label: "Declaração" },
 ];
 
-export function App({ api: apiProp, initialTab = "portfolio" }: AppProps) {
+export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
   const [api] = useState(() => apiProp ?? createApiClient());
   const [tab, setTab] = useState<Tab>(initialTab);
+  const [dashboard, setDashboard] = useState<LoadState<DashboardJson>>({ status: "idle" });
   const [portfolio, setPortfolio] = useState<LoadState<PositionJson[]>>({ status: "idle" });
   const [apuration, setApuration] = useState<LoadState<MonthlyApurationJson>>({ status: "idle" });
   const [declaration, setDeclaration] = useState<LoadState<AnnualDeclarationJson>>({ status: "idle" });
@@ -45,6 +48,31 @@ export function App({ api: apiProp, initialTab = "portfolio" }: AppProps) {
   const [fileName, setFileName] = useState<string | null>(null);
   const [demo, setDemo] = useState<LoadState<string>>({ status: "idle" });
   const [portfolioReload, setPortfolioReload] = useState(0);
+  const [dashboardReload, setDashboardReload] = useState(0);
+
+  useEffect(() => {
+    if (tab !== "dashboard") return;
+    let cancelled = false;
+    setDashboard({ status: "loading" });
+    api
+      .getDashboard(month)
+      .then((data) => {
+        if (cancelled) return;
+        setDashboard(
+          data.assetCount === 0 ? { status: "empty" } : { status: "success", data },
+        );
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setDashboard({
+          status: "error",
+          message: "Não foi possível carregar o resumo. Tente novamente em instantes.",
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [api, tab, month, dashboardReload]);
 
   useEffect(() => {
     if (tab !== "portfolio") return;
@@ -73,8 +101,9 @@ export function App({ api: apiProp, initialTab = "portfolio" }: AppProps) {
     try {
       await api.resetDemo();
       setDemo({ status: "success", data: "Carteira de demonstração carregada." });
-      setTab("portfolio");
+      setTab("dashboard");
       setPortfolioReload((n) => n + 1);
+      setDashboardReload((n) => n + 1);
     } catch {
       setDemo({
         status: "error",
@@ -194,6 +223,63 @@ export function App({ api: apiProp, initialTab = "portfolio" }: AppProps) {
       </div>
 
       <main className="main">
+        {tab === "dashboard" && (
+          <section className="panel">
+            <h2 className="section-title">Resumo</h2>
+            <p className="section-lead">
+              Visão rápida do custo investido, obrigações do mês e uso da isenção.
+            </p>
+            <div className="field">
+              <label htmlFor="dashboard-month">Mês de referência</label>
+              <input
+                id="dashboard-month"
+                type="month"
+                value={month}
+                onChange={(event) => setMonth(event.target.value)}
+              />
+            </div>
+            {dashboard.status === "loading" && (
+              <p className="state" role="status">
+                Carregando resumo…
+              </p>
+            )}
+            {dashboard.status === "empty" && (
+              <p className="state state-empty" role="status">
+                Você ainda não possui posições. Importe operações ou carregue a demonstração.
+              </p>
+            )}
+            {dashboard.status === "error" && (
+              <p className="state state-error" role="alert">
+                {dashboard.message}
+              </p>
+            )}
+            {dashboard.status === "success" && (
+              <div className="kpi-grid" data-testid="dashboard-kpis">
+                <article className="kpi-card">
+                  <p className="kpi-label">Custo investido</p>
+                  <p className="kpi-value money">{formatCents(dashboard.data.investedCost.cents)}</p>
+                </article>
+                <article className="kpi-card">
+                  <p className="kpi-label">Ativos</p>
+                  <p className="kpi-value">{dashboard.data.assetCount}</p>
+                </article>
+                <article className="kpi-card">
+                  <p className="kpi-label">DARF do mês</p>
+                  <p className="kpi-value">{formatCents(dashboard.data.monthDarf.cents)}</p>
+                </article>
+                <article className="kpi-card">
+                  <p className="kpi-label">Isenção usada</p>
+                  <p className="kpi-value">{dashboard.data.exemptionPercentUsed}%</p>
+                  <p className="kpi-hint">
+                    {formatCents(dashboard.data.exemptionUsedCents)} de{" "}
+                    {formatCents(dashboard.data.exemptionLimitCents)}
+                  </p>
+                </article>
+              </div>
+            )}
+          </section>
+        )}
+
         {tab === "upload" && (
           <section className="panel">
             <h2 className="section-title">Importar operações</h2>

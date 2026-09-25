@@ -196,4 +196,45 @@ describe("HTTP API", () => {
       acquisitionCost: { cents: 600000 },
     });
   });
+
+  it("GET /dashboard?month= returns KPIs from ports", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).get("/dashboard").query({ month: "2024-03" });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      month: "2024-03",
+      investedCost: { cents: 773400 },
+      assetCount: 3,
+      monthDarf: { cents: 22500 },
+      exemptionUsedCents: 850000,
+      exemptionLimitCents: 2000000,
+      exemptionPercentUsed: 42.5,
+    });
+  });
+
+  it("GET /dashboard without month returns 400", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).get("/dashboard");
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "Query parameter month is required as YYYY-MM" });
+  });
+
+  it("GET /dashboard after demo reset reflects demo KPIs", async () => {
+    const app = createApp(createMockPorts({ portfolio: [] }));
+    await request(app).post("/demo/reset");
+    const res = await request(app).get("/dashboard").query({ month: "2024-03" });
+    expect(res.status).toBe(200);
+    expect(res.body.assetCount).toBe(6);
+    expect(res.body.investedCost).toEqual({ cents: 2245000 });
+    expect(res.body.monthDarf).toEqual({ cents: 48000 });
+    expect(res.body.exemptionPercentUsed).toBe(91);
+  });
+
+  it("GET /dashboard with empty portfolio returns zero assets", async () => {
+    const app = createApp(createMockPorts({ portfolio: [] }));
+    const res = await request(app).get("/dashboard").query({ month: "2024-03" });
+    expect(res.status).toBe(200);
+    expect(res.body.assetCount).toBe(0);
+    expect(res.body.investedCost).toEqual({ cents: 0 });
+  });
 });
