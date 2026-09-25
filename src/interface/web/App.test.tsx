@@ -451,4 +451,33 @@ describe("Web UI", () => {
     expect(simulateSale).toHaveBeenCalled();
     expect(screen.getByText(/Não persistido/)).toBeInTheDocument();
   });
+
+  it("shows declaration checklist toggles after loading declaration", async () => {
+    const user = userEvent.setup();
+    render(
+      <App
+        api={mockApi({
+          getDeclaration: vi.fn().mockResolvedValue({
+            year: 2024,
+            bensEDireitos: [
+              {
+                ticker: "PETR4",
+                quantity: 100,
+                averagePrice: { cents: 2850 },
+                acquisitionCost: { cents: 285000 },
+              },
+            ],
+            rendimentos: [{ kind: "DIVIDENDO", amount: { cents: 10000 } }],
+          }),
+        })}
+        initialTab="declaration"
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Ver declaração" }));
+    expect(await screen.findByTestId("declaration-checklist")).toBeInTheDocument();
+    const bens = screen.getByLabelText(/Bens e direitos conferidos/);
+    expect(bens).not.toBeChecked();
+    await user.click(bens);
+    expect(bens).toBeChecked();
+  });
 });

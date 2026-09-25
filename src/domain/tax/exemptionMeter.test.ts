@@ -50,4 +50,13 @@ describe("buildExemptionMeter", () => {
   it("rejects negative usage", () => {
     expect(() => buildExemptionMeter(-1)).toThrow("usedCents must be a non-negative integer");
   });
+
+  it("treats caller-supplied usedCents as swing equity only (FII/day trade excluded upstream)", () => {
+    // Domain meter never inspects asset kind; FII and day trade must not be included in usedCents by the caller.
+    const swingOnly = buildExemptionMeter(500_000);
+    const withExtraIfMistakenlyIncluded = buildExemptionMeter(500_000 + 300_000);
+    expect(swingOnly.percentUsed).toBe(25);
+    expect(withExtraIfMistakenlyIncluded.percentUsed).toBe(40);
+    expect(swingOnly.percentUsed).not.toBe(withExtraIfMistakenlyIncluded.percentUsed);
+  });
 });
