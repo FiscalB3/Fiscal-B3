@@ -43,6 +43,8 @@ export function App({ api: apiProp, initialTab = "portfolio" }: AppProps) {
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [demo, setDemo] = useState<LoadState<string>>({ status: "idle" });
+  const [portfolioReload, setPortfolioReload] = useState(0);
 
   useEffect(() => {
     if (tab !== "portfolio") return;
@@ -54,7 +56,7 @@ export function App({ api: apiProp, initialTab = "portfolio" }: AppProps) {
         if (cancelled) return;
         setPortfolio(data.length === 0 ? { status: "empty" } : { status: "success", data });
       })
-      .catch((error: unknown) => {
+      .catch(() => {
         if (cancelled) return;
         setPortfolio({
           status: "error",
@@ -64,7 +66,22 @@ export function App({ api: apiProp, initialTab = "portfolio" }: AppProps) {
     return () => {
       cancelled = true;
     };
-  }, [api, tab]);
+  }, [api, tab, portfolioReload]);
+
+  async function onLoadDemo() {
+    setDemo({ status: "loading" });
+    try {
+      await api.resetDemo();
+      setDemo({ status: "success", data: "Carteira de demonstração carregada." });
+      setTab("portfolio");
+      setPortfolioReload((n) => n + 1);
+    } catch {
+      setDemo({
+        status: "error",
+        message: "Não foi possível carregar a demonstração. Tente novamente.",
+      });
+    }
+  }
 
   async function onUpload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -137,19 +154,39 @@ export function App({ api: apiProp, initialTab = "portfolio" }: AppProps) {
             <p className="brand-tag">Organização fiscal</p>
           </div>
         </div>
-        <nav className="nav" aria-label="Seções">
-          {NAV.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              aria-current={tab === item.id ? "page" : undefined}
-              onClick={() => setTab(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
+        <div className="topbar-actions">
+          <button
+            type="button"
+            className="btn-ghost"
+            disabled={demo.status === "loading"}
+            onClick={() => void onLoadDemo()}
+          >
+            {demo.status === "loading" ? "Carregando…" : "Carregar demonstração"}
+          </button>
+          <nav className="nav" aria-label="Seções">
+            {NAV.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                aria-current={tab === item.id ? "page" : undefined}
+                onClick={() => setTab(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </div>
       </header>
+      {demo.status === "success" && (
+        <p className="state state-success demo-banner" role="status">
+          {demo.data}
+        </p>
+      )}
+      {demo.status === "error" && (
+        <p className="state state-error demo-banner" role="alert">
+          {demo.message}
+        </p>
+      )}
 
       <div className="hero">
         <h1>Seu patrimônio sob controle</h1>

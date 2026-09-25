@@ -20,11 +20,20 @@ export type AnnualDeclarationJson = {
   rendimentos: Array<{ kind: string; amount: MoneyJson }>;
 };
 
+export type DemoResetJson = {
+  ok: true;
+  tickers: string[];
+  modalities: Array<"DAY_TRADE" | "SWING">;
+  hasFii: true;
+  hasProvento: true;
+};
+
 export type ApiClient = {
   getPortfolio(): Promise<PositionJson[]>;
   getApuration(month: string): Promise<MonthlyApurationJson>;
   getDeclaration(year: number): Promise<AnnualDeclarationJson>;
   importFile(file: File): Promise<{ ok: true } | { ok: false; errors: Array<{ line: number; message: string }> }>;
+  resetDemo(): Promise<DemoResetJson>;
 };
 
 export function createApiClient(baseUrl = ""): ApiClient {
@@ -68,6 +77,14 @@ export function createApiClient(baseUrl = ""): ApiClient {
         return { ok: false as const, errors: json.errors };
       }
       throw new Error("error" in json ? json.error : "Import failed");
+    },
+
+    async resetDemo() {
+      const res = await fetch(`${baseUrl}/demo/reset`, { method: "POST" });
+      if (!res.ok) {
+        throw new Error("Failed to load demonstration");
+      }
+      return (await res.json()) as DemoResetJson;
     },
   };
 }

@@ -10,6 +10,13 @@ function mockApi(overrides: Partial<ApiClient> = {}): ApiClient {
     getApuration: vi.fn(),
     getDeclaration: vi.fn(),
     importFile: vi.fn(),
+    resetDemo: vi.fn().mockResolvedValue({
+      ok: true,
+      tickers: ["PETR4", "VALE3", "ITUB4", "BBAS3", "HGLG11", "MXRF11"],
+      modalities: ["DAY_TRADE", "SWING"],
+      hasFii: true,
+      hasProvento: true,
+    }),
     ...overrides,
   };
 }
@@ -75,5 +82,44 @@ describe("Web UI", () => {
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Linha 2: invalid quantity");
     });
+  });
+
+  it("loads demonstration portfolio from Carregar demonstração", async () => {
+    const user = userEvent.setup();
+    const resetDemo = vi.fn().mockResolvedValue({
+      ok: true,
+      tickers: ["PETR4", "VALE3", "ITUB4", "BBAS3", "HGLG11", "MXRF11"],
+      modalities: ["DAY_TRADE", "SWING"],
+      hasFii: true,
+      hasProvento: true,
+    });
+    const getPortfolio = vi
+      .fn()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          ticker: "PETR4",
+          quantity: 200,
+          averagePrice: { cents: 3000 },
+          acquisitionCost: { cents: 600000 },
+        },
+        {
+          ticker: "HGLG11",
+          quantity: 20,
+          averagePrice: { cents: 16500 },
+          acquisitionCost: { cents: 330000 },
+        },
+      ]);
+    render(<App api={mockApi({ resetDemo, getPortfolio })} />);
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Você ainda não possui posições. Importe suas operações para começar.",
+    );
+    await user.click(screen.getByRole("button", { name: "Carregar demonstração" }));
+    await waitFor(() => {
+      expect(resetDemo).toHaveBeenCalledTimes(1);
+    });
+    expect(await screen.findByText("Carteira de demonstração carregada.")).toBeInTheDocument();
+    expect((await screen.findAllByText("PETR4")).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("HGLG11")).length).toBeGreaterThan(0);
   });
 });

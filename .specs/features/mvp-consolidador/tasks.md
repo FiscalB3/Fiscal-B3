@@ -220,10 +220,12 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Reset demo recria carteira determinística
-- [ ] Portfolio/apuração/declaração refletem a seed
-- [ ] Gate: `npm test && npm run test:integration`
-- [ ] Test count: ≥6 novos
+- [x] Reset demo recria carteira determinística
+- [x] Portfolio/apuração/declaração refletem a seed
+- [x] Gate: `npm test && npm run test:integration`
+- [x] Test count: ≥6 novos
+
+**Status**: ✅ Concluída (6 integration + 1 UI)
 
 **Tests**: integration  
 **Gate**: full
@@ -593,7 +595,8 @@ T6.1 → T6.2 → T6.3 → T6.6 → T6.14 → T6.18 → T6.16 → T6.7 → T6.8 
 | T1–T4, T6 | ✅ |
 | T5, T7 | Pendente |
 | T6.1 | ✅ Tema oceano |
-| T6.2–T6.18 | Planejada (expansão apresentação) |
+| T6.2 | ✅ Seed demo |
+| T6.3–T6.18 | Planejada (expansão apresentação) |
 
 ---
 

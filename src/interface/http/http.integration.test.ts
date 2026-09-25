@@ -124,4 +124,76 @@ describe("HTTP API", () => {
     expect(res.status).toBe(400);
     expect(res.body).toEqual({ error: "File is required" });
   });
+
+  it("POST /demo/reset returns deterministic seed metadata", async () => {
+    const app = createApp(createMockPorts({ portfolio: [] }));
+    const res = await request(app).post("/demo/reset");
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.tickers).toEqual(["PETR4", "VALE3", "ITUB4", "BBAS3", "HGLG11", "MXRF11"]);
+    expect(res.body.modalities).toEqual(["DAY_TRADE", "SWING"]);
+    expect(res.body.hasFii).toBe(true);
+    expect(res.body.hasProvento).toBe(true);
+  });
+
+  it("POST /demo/reset recreates the same portfolio twice", async () => {
+    const app = createApp(createMockPorts({ portfolio: [] }));
+    await request(app).post("/demo/reset");
+    const first = await request(app).get("/portfolio");
+    await request(app).post("/demo/reset");
+    const second = await request(app).get("/portfolio");
+    expect(first.body).toEqual(second.body);
+    expect(first.body).toHaveLength(6);
+  });
+
+  it("GET /portfolio after demo reset has at least 5 tickers including FII", async () => {
+    const app = createApp(createMockPorts({ portfolio: [] }));
+    await request(app).post("/demo/reset");
+    const res = await request(app).get("/portfolio");
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBeGreaterThanOrEqual(5);
+    const tickers = res.body.map((row: { ticker: string }) => row.ticker);
+    expect(tickers).toContain("HGLG11");
+    expect(tickers).toContain("MXRF11");
+  });
+
+  it("GET /apuration after demo reset reflects demo DARF", async () => {
+    const app = createApp(createMockPorts({ portfolio: [] }));
+    await request(app).post("/demo/reset");
+    const res = await request(app).get("/apuration").query({ month: "2024-03" });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      month: "2024-03",
+      result: { cents: 320000 },
+      exemptionApplied: { cents: 0 },
+      darf: { cents: 48000 },
+    });
+  });
+
+  it("GET /declaration after demo reset reflects seed bens and provento", async () => {
+    const app = createApp(createMockPorts({ portfolio: [] }));
+    await request(app).post("/demo/reset");
+    const res = await request(app).get("/declaration").query({ year: "2024" });
+    expect(res.status).toBe(200);
+    expect(res.body.bensEDireitos).toHaveLength(6);
+    expect(res.body.rendimentos).toEqual([
+      { kind: "DIVIDENDO", amount: { cents: 25000 } },
+      { kind: "JCP", amount: { cents: 9000 } },
+      { kind: "RENDIMENTO_FII", amount: { cents: 42000 } },
+    ]);
+  });
+
+  it("demo reset restores portfolio after empty state", async () => {
+    const app = createApp(createMockPorts({ portfolio: [] }));
+    const empty = await request(app).get("/portfolio");
+    expect(empty.body).toEqual([]);
+    await request(app).post("/demo/reset");
+    const seeded = await request(app).get("/portfolio");
+    expect(seeded.body[0]).toEqual({
+      ticker: "PETR4",
+      quantity: 200,
+      averagePrice: { cents: 3000 },
+      acquisitionCost: { cents: 600000 },
+    });
+  });
 });

@@ -4,6 +4,7 @@ import type { GetAnnualDeclaration } from "../../application/ports/GetAnnualDecl
 import type { GetMonthlyApuration } from "../../application/ports/GetMonthlyApuration";
 import type { GetPortfolio } from "../../application/ports/GetPortfolio";
 import type { ImportOperations } from "../../application/ports/ImportOperations";
+import type { ResetDemo } from "../../application/ports/ResetDemo";
 import {
   serializeAnnualDeclaration,
   serializeMonthlyApuration,
@@ -15,6 +16,7 @@ export type AppPorts = {
   getPortfolio: GetPortfolio;
   getMonthlyApuration: GetMonthlyApuration;
   getAnnualDeclaration: GetAnnualDeclaration;
+  resetDemo: ResetDemo;
 };
 
 const ALLOWED_IMPORT_MIME_TYPES = new Set([
@@ -100,6 +102,15 @@ export function createApp(ports: AppPorts): Express {
       }
 
       res.status(200).json({ ok: true });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/demo/reset", async (_req, res, next) => {
+    try {
+      const result = await ports.resetDemo.execute();
+      res.status(200).json(result);
     } catch (error) {
       next(error);
     }
