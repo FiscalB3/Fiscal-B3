@@ -284,10 +284,12 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Port/UI lista obrigações + vencimento
-- [ ] Teste da regra de vencimento
-- [ ] Gate: full
-- [ ] Test count: ≥8
+- [x] Port/UI lista obrigações + vencimento
+- [x] Teste da regra de vencimento
+- [x] Gate: full
+- [x] Test count: ≥8
+
+**Status**: ✅ Concluída (5 domain + 3 HTTP + 2 UI)
 
 **Tests**: unit + integration  
 **Gate**: full
@@ -602,7 +604,8 @@ T6.1 → T6.2 → T6.3 → T6.6 → T6.14 → T6.18 → T6.16 → T6.7 → T6.8 
 | T6.2 | ✅ Seed demo |
 | T6.3 | ✅ Dashboard KPIs |
 | T6.4 | ✅ Timeline |
-| T6.5–T6.18 | Planejada (expansão apresentação) |
+| T6.5 | ✅ Calendário DARF |
+| T6.6–T6.18 | Planejada (expansão apresentação) |
 
 ---
 

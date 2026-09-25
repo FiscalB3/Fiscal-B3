@@ -1,6 +1,7 @@
 import express, { type Express, type Request, type Response } from "express";
 import multer from "multer";
 import type { GetAnnualDeclaration } from "../../application/ports/GetAnnualDeclaration";
+import type { GetDarfCalendar } from "../../application/ports/GetDarfCalendar";
 import type { GetDashboard } from "../../application/ports/GetDashboard";
 import type { GetMonthlyApuration } from "../../application/ports/GetMonthlyApuration";
 import type { GetPortfolio } from "../../application/ports/GetPortfolio";
@@ -12,6 +13,7 @@ import {
   serializeDashboard,
   serializeMonthlyApuration,
   serializePosition,
+  serializeMoney,
 } from "./serialize";
 
 export type AppPorts = {
@@ -21,6 +23,7 @@ export type AppPorts = {
   getAnnualDeclaration: GetAnnualDeclaration;
   getDashboard: GetDashboard;
   getTimeline: GetTimeline;
+  getDarfCalendar: GetDarfCalendar;
   resetDemo: ResetDemo;
 };
 
@@ -72,6 +75,30 @@ export function createApp(ports: AppPorts): Express {
     try {
       const events = await ports.getTimeline.execute();
       res.status(200).json(events);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/darf-calendar", async (req, res, next) => {
+    try {
+      const rawYear = typeof req.query.year === "string" ? req.query.year : undefined;
+      let year: number | undefined;
+      if (rawYear !== undefined) {
+        year = Number.parseInt(rawYear, 10);
+        if (!Number.isInteger(year) || year < 1900 || year > 2100) {
+          res.status(400).json({ error: "Query parameter year must be a valid year" });
+          return;
+        }
+      }
+      const obligations = await ports.getDarfCalendar.execute(year === undefined ? undefined : { year });
+      res.status(200).json(
+        obligations.map((row) => ({
+          month: row.month,
+          darf: serializeMoney(row.darf),
+          dueDate: row.dueDate,
+        })),
+      );
     } catch (error) {
       next(error);
     }

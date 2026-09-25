@@ -2,6 +2,7 @@ export type { GetAnnualDeclaration, AnnualDeclaration, AnnualIncomeLine } from "
 export type { GetMonthlyApuration, MonthlyApuration } from "./GetMonthlyApuration";
 export type { GetDashboard, DashboardSummary } from "./GetDashboard";
 export type { GetTimeline, TimelineEvent, TimelineEventKind } from "./GetTimeline";
+export type { GetDarfCalendar, DarfObligation } from "./GetDarfCalendar";
 export type { ResetDemo, ResetDemoResult } from "./ResetDemo";
 export type { GetPortfolio } from "./GetPortfolio";
 export type { ImportOperations, ImportResult, ImportSource, ImportLineError } from "./ImportOperations";

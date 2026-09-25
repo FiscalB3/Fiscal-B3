@@ -23,6 +23,7 @@ function mockApi(overrides: Partial<ApiClient> = {}): ApiClient {
       investedCost: { cents: 0 },
     }),
     getTimeline: vi.fn().mockResolvedValue([]),
+    getDarfCalendar: vi.fn().mockResolvedValue([]),
     getApuration: vi.fn(),
     getDeclaration: vi.fn(),
     importFile: vi.fn(),
@@ -235,5 +236,28 @@ describe("Web UI", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Não foi possível carregar a linha do tempo. Tente novamente.",
     );
+  });
+
+  it("shows DARF calendar with due dates from API", async () => {
+    render(
+      <App
+        api={mockApi({
+          getDarfCalendar: vi.fn().mockResolvedValue([
+            { month: "2024-03", darf: { cents: 22500 }, dueDate: "2024-04-30" },
+            { month: "2024-05", darf: { cents: 9000 }, dueDate: "2024-06-28" },
+          ]),
+        })}
+        initialTab="darf"
+      />,
+    );
+    expect(await screen.findByTestId("darf-calendar")).toBeInTheDocument();
+    expect(screen.getByText("2024-03")).toBeInTheDocument();
+    expect(screen.getByText("2024-04-30")).toBeInTheDocument();
+    expect(screen.getByText("R$ 225,00")).toBeInTheDocument();
+  });
+
+  it("shows empty DARF calendar", async () => {
+    render(<App api={mockApi({ getDarfCalendar: vi.fn().mockResolvedValue([]) })} initialTab="darf" />);
+    expect(await screen.findByText("Nenhuma obrigação de DARF neste ano.")).toBeInTheDocument();
   });
 });

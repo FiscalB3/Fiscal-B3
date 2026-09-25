@@ -1,4 +1,5 @@
 import type { GetAnnualDeclaration, AnnualDeclaration } from "../../application/ports/GetAnnualDeclaration";
+import type { GetDarfCalendar, DarfObligation } from "../../application/ports/GetDarfCalendar";
 import type { GetDashboard, DashboardSummary } from "../../application/ports/GetDashboard";
 import type { GetMonthlyApuration, MonthlyApuration } from "../../application/ports/GetMonthlyApuration";
 import type { GetPortfolio } from "../../application/ports/GetPortfolio";
@@ -7,6 +8,7 @@ import type { ImportOperations } from "../../application/ports/ImportOperations"
 import type { ResetDemo, ResetDemoResult } from "../../application/ports/ResetDemo";
 import { Money } from "../../domain/money/Money";
 import type { PositionSnapshot } from "../../domain/position/PositionSnapshot";
+import { darfDueDate } from "../../domain/tax/darfDueDate";
 import type { AppPorts } from "./createApp";
 
 const EXEMPTION_LIMIT_CENTS = 2_000_000;
@@ -183,6 +185,18 @@ const DEMO_TIMELINE: readonly TimelineEvent[] = [
   },
 ];
 
+const SAMPLE_DARF_MONTHS: ReadonlyArray<{ month: string; darfCents: number }> = [
+  { month: "2024-01", darfCents: 12000 },
+  { month: "2024-03", darfCents: 22500 },
+];
+
+const DEMO_DARF_MONTHS: ReadonlyArray<{ month: string; darfCents: number }> = [
+  { month: "2024-01", darfCents: 35000 },
+  { month: "2024-02", darfCents: 18000 },
+  { month: "2024-03", darfCents: 48000 },
+  { month: "2024-05", darfCents: 9000 },
+];
+
 function clonePortfolio(rows: readonly PositionSnapshot[]): PositionSnapshot[] {
   return rows.map((row) => ({
     ticker: row.ticker,
@@ -207,9 +221,11 @@ export function createMockPorts(options?: {
   portfolio?: readonly PositionSnapshot[];
   importOk?: boolean;
   timeline?: readonly TimelineEvent[];
+  darfMonths?: ReadonlyArray<{ month: string; darfCents: number }>;
 }): AppPorts {
   let portfolio = clonePortfolio(options?.portfolio ?? samplePortfolio);
   let timeline = cloneTimeline(options?.timeline ?? SAMPLE_TIMELINE);
+  let darfMonths = [...(options?.darfMonths ?? SAMPLE_DARF_MONTHS)];
   let demoActive = false;
   const importOk = options?.importOk ?? true;
 
@@ -278,10 +294,26 @@ export function createMockPorts(options?: {
     },
   };
 
+  const getDarfCalendar: GetDarfCalendar = {
+    async execute(input): Promise<readonly DarfObligation[]> {
+      const year = input?.year;
+      return darfMonths
+        .filter((row) => row.darfCents > 0)
+        .filter((row) => (year === undefined ? true : row.month.startsWith(`${year}-`)))
+        .map((row) => ({
+          month: row.month,
+          darf: Money.fromCents(row.darfCents),
+          dueDate: darfDueDate(row.month),
+        }))
+        .sort((a, b) => a.month.localeCompare(b.month));
+    },
+  };
+
   const resetDemo: ResetDemo = {
     async execute(): Promise<ResetDemoResult> {
       portfolio = clonePortfolio(DEMO_PORTFOLIO);
       timeline = cloneTimeline(DEMO_TIMELINE);
+      darfMonths = [...DEMO_DARF_MONTHS];
       demoActive = true;
       return {
         ok: true,
@@ -300,6 +332,7 @@ export function createMockPorts(options?: {
     getAnnualDeclaration,
     getDashboard,
     getTimeline,
+    getDarfCalendar,
     resetDemo,
   };
 }

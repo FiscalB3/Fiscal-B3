@@ -281,4 +281,34 @@ describe("HTTP API", () => {
       summary: "Compra de 100 PETR4",
     });
   });
+
+  it("GET /darf-calendar returns obligations with due dates", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).get("/darf-calendar").query({ year: "2024" });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([
+      { month: "2024-01", darf: { cents: 12000 }, dueDate: "2024-02-29" },
+      { month: "2024-03", darf: { cents: 22500 }, dueDate: "2024-04-30" },
+    ]);
+  });
+
+  it("GET /darf-calendar with invalid year returns 400", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).get("/darf-calendar").query({ year: "nope" });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "Query parameter year must be a valid year" });
+  });
+
+  it("GET /darf-calendar excludes zero DARF months", async () => {
+    const app = createApp(
+      createMockPorts({
+        darfMonths: [
+          { month: "2024-01", darfCents: 0 },
+          { month: "2024-02", darfCents: 5000 },
+        ],
+      }),
+    );
+    const res = await request(app).get("/darf-calendar").query({ year: "2024" });
+    expect(res.body).toEqual([{ month: "2024-02", darf: { cents: 5000 }, dueDate: "2024-03-29" }]);
+  });
 });

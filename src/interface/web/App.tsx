@@ -5,6 +5,7 @@ import {
   type AnnualDeclarationJson,
   type ApiClient,
   type DashboardJson,
+  type DarfObligationJson,
   type MonthlyApurationJson,
   type PositionJson,
   type TimelineEventJson,
@@ -12,7 +13,7 @@ import {
 import { AllocationChart, CompareBars, IncomeBars } from "./charts";
 import "./styles.css";
 
-type Tab = "dashboard" | "timeline" | "upload" | "portfolio" | "apuration" | "declaration";
+type Tab = "dashboard" | "timeline" | "darf" | "upload" | "portfolio" | "apuration" | "declaration";
 
 type LoadState<T> =
   | { status: "idle" }
@@ -29,6 +30,7 @@ export type AppProps = {
 const NAV: Array<{ id: Tab; label: string }> = [
   { id: "dashboard", label: "Início" },
   { id: "timeline", label: "Linha do tempo" },
+  { id: "darf", label: "DARF" },
   { id: "upload", label: "Importar" },
   { id: "portfolio", label: "Carteira" },
   { id: "apuration", label: "Apuração" },
@@ -40,6 +42,9 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
   const [tab, setTab] = useState<Tab>(initialTab);
   const [dashboard, setDashboard] = useState<LoadState<DashboardJson>>({ status: "idle" });
   const [timeline, setTimeline] = useState<LoadState<TimelineEventJson[]>>({ status: "idle" });
+  const [darfCalendar, setDarfCalendar] = useState<LoadState<DarfObligationJson[]>>({
+    status: "idle",
+  });
   const [portfolio, setPortfolio] = useState<LoadState<PositionJson[]>>({ status: "idle" });
   const [apuration, setApuration] = useState<LoadState<MonthlyApurationJson>>({ status: "idle" });
   const [declaration, setDeclaration] = useState<LoadState<AnnualDeclarationJson>>({ status: "idle" });
@@ -53,6 +58,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
   const [portfolioReload, setPortfolioReload] = useState(0);
   const [dashboardReload, setDashboardReload] = useState(0);
   const [timelineReload, setTimelineReload] = useState(0);
+  const [darfReload, setDarfReload] = useState(0);
 
   useEffect(() => {
     if (tab !== "dashboard") return;
@@ -101,6 +107,28 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
   }, [api, tab, timelineReload]);
 
   useEffect(() => {
+    if (tab !== "darf") return;
+    let cancelled = false;
+    setDarfCalendar({ status: "loading" });
+    api
+      .getDarfCalendar(Number.parseInt(year, 10))
+      .then((data) => {
+        if (cancelled) return;
+        setDarfCalendar(data.length === 0 ? { status: "empty" } : { status: "success", data });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setDarfCalendar({
+          status: "error",
+          message: "Não foi possível carregar o calendário de DARF. Tente novamente.",
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [api, tab, year, darfReload]);
+
+  useEffect(() => {
     if (tab !== "portfolio") return;
     let cancelled = false;
     setPortfolio({ status: "loading" });
@@ -131,6 +159,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
       setPortfolioReload((n) => n + 1);
       setDashboardReload((n) => n + 1);
       setTimelineReload((n) => n + 1);
+      setDarfReload((n) => n + 1);
     } catch {
       setDemo({
         status: "error",
@@ -337,6 +366,61 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
                   </li>
                 ))}
               </ol>
+            )}
+          </section>
+        )}
+
+        {tab === "darf" && (
+          <section className="panel">
+            <h2 className="section-title">Calendário de DARF</h2>
+            <p className="section-lead">
+              Meses com DARF devido e vencimento no último dia útil do mês seguinte.
+            </p>
+            <div className="field">
+              <label htmlFor="darf-year">Ano</label>
+              <input
+                id="darf-year"
+                type="number"
+                value={year}
+                onChange={(event) => setYear(event.target.value)}
+              />
+            </div>
+            {darfCalendar.status === "loading" && (
+              <p className="state" role="status">
+                Carregando obrigações…
+              </p>
+            )}
+            {darfCalendar.status === "empty" && (
+              <p className="state state-empty" role="status">
+                Nenhuma obrigação de DARF neste ano.
+              </p>
+            )}
+            {darfCalendar.status === "error" && (
+              <p className="state state-error" role="alert">
+                {darfCalendar.message}
+              </p>
+            )}
+            {darfCalendar.status === "success" && (
+              <div className="table-wrap">
+                <table className="table" data-testid="darf-calendar">
+                  <thead>
+                    <tr>
+                      <th>Mês</th>
+                      <th>DARF</th>
+                      <th>Vencimento</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {darfCalendar.data.map((row) => (
+                      <tr key={row.month}>
+                        <td>{row.month}</td>
+                        <td>{formatCents(row.darf.cents)}</td>
+                        <td>{row.dueDate}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </section>
         )}

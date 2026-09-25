@@ -46,10 +46,17 @@ export type TimelineEventJson = {
   summary: string;
 };
 
+export type DarfObligationJson = {
+  month: string;
+  darf: MoneyJson;
+  dueDate: string;
+};
+
 export type ApiClient = {
   getPortfolio(): Promise<PositionJson[]>;
   getDashboard(month: string): Promise<DashboardJson>;
   getTimeline(): Promise<TimelineEventJson[]>;
+  getDarfCalendar(year?: number): Promise<DarfObligationJson[]>;
   getApuration(month: string): Promise<MonthlyApurationJson>;
   getDeclaration(year: number): Promise<AnnualDeclarationJson>;
   importFile(file: File): Promise<{ ok: true } | { ok: false; errors: Array<{ line: number; message: string }> }>;
@@ -80,6 +87,15 @@ export function createApiClient(baseUrl = ""): ApiClient {
         throw new Error("Failed to load timeline");
       }
       return (await res.json()) as TimelineEventJson[];
+    },
+
+    async getDarfCalendar(year?: number) {
+      const query = year === undefined ? "" : `?year=${encodeURIComponent(String(year))}`;
+      const res = await fetch(`${baseUrl}/darf-calendar${query}`);
+      if (!res.ok) {
+        throw new Error("Failed to load DARF calendar");
+      }
+      return (await res.json()) as DarfObligationJson[];
     },
 
     async getApuration(month: string) {
