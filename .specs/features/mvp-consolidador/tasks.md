@@ -13,7 +13,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Fonte de produto**: PDF *Consolidador B3* + `AGENTS.md` + escopo de apresentação
 **Design**: tema **oceano** (azul + verde-água) em `DESIGN.md`
 **Spec**: IDs `MVP-NN` + `T6E-NN` (expansão da interface)
-**Status**: T1–T4 e T6 base concluídas; T5 e T7 pendentes; **T6.1–T6.14 planejadas** (sem modo Apresentar)
+**Status**: T1–T4 e T6 base concluídas; T5 e T7 pendentes; **T6.1–T6.18 concluídas** (sem modo Apresentar)
 
 ---
 
@@ -388,10 +388,12 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Endpoint/port de comparação
-- [ ] UI lado a lado
-- [ ] Gate: full
-- [ ] Test count: ≥8
+- [x] Endpoint/port de comparação
+- [x] UI lado a lado
+- [x] Gate: full
+- [x] Test count: ≥8
+
+**Status**: ✅ Concluída
 
 **Tests**: unit + integration  
 **Gate**: full
@@ -468,10 +470,12 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Breakdown estruturado na API/port
-- [ ] UI só exibe (não calcula alíquota)
-- [ ] Gate: quick
-- [ ] Test count: ≥6
+- [x] Breakdown estruturado na API/port
+- [x] UI só exibe (não calcula alíquota)
+- [x] Gate: quick
+- [x] Test count: ≥6
+
+**Status**: ✅ Concluída
 
 **Tests**: unit  
 **Gate**: quick
@@ -487,10 +491,12 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Simulação read-only
-- [ ] Resultado mostra ganho/perda e IR estimado
-- [ ] Gate: full
-- [ ] Test count: ≥8
+- [x] Simulação read-only
+- [x] Resultado mostra ganho/perda e IR estimado
+- [x] Gate: full
+- [x] Test count: ≥8
+
+**Status**: ✅ Concluída
 
 **Tests**: unit + integration  
 **Gate**: full
@@ -506,10 +512,12 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Série derivada de eventos
-- [ ] Gráfico de linha na UI
-- [ ] Gate: full
-- [ ] Test count: ≥6
+- [x] Série derivada de eventos
+- [x] Gráfico de linha na UI
+- [x] Gate: full
+- [x] Test count: ≥6
+
+**Status**: ✅ Concluída
 
 **Tests**: unit + integration  
 **Gate**: full
@@ -525,10 +533,12 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Itens ligados aos dados da declaração/apuração
-- [ ] Toggle “conferido” (estado de UI ok no MVP)
-- [ ] Gate: quick
-- [ ] Test count: ≥4
+- [x] Itens ligados aos dados da declaração/apuração
+- [x] Toggle “conferido” (estado de UI ok no MVP)
+- [x] Gate: quick
+- [x] Test count: ≥4
+
+**Status**: ✅ Concluída
 
 **Tests**: unit  
 **Gate**: quick
@@ -544,10 +554,12 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Insights calculados fora do React (port/helper)
-- [ ] Cards no dashboard
-- [ ] Gate: quick
-- [ ] Test count: ≥6
+- [x] Insights calculados fora do React (port/helper)
+- [x] Cards no dashboard
+- [x] Gate: quick
+- [x] Test count: ≥6
+
+**Status**: ✅ Concluída
 
 **Tests**: unit  
 **Gate**: quick
@@ -623,11 +635,15 @@ T6.1 → T6.2 → T6.3 → T6.6 → T6.14 → T6.18 → T6.16 → T6.7 → T6.8 
 | T6.7 | ✅ Day vs swing |
 | T6.8 | ✅ Prejuízos |
 | T6.9 | ✅ Detalhe ativo |
-| T6.10 | Planejada |
+| T6.10 | ✅ Comparativo anual |
 | T6.11 | ✅ Export CSV |
 | T6.12 | ✅ Print IR |
 | T6.13 | ✅ Filtro ticker |
-| T6.14–T6.18 | Planejada |
+| T6.14 | ✅ DARF breakdown |
+| T6.15 | ✅ Simulador venda |
+| T6.16 | ✅ Evolução custo |
+| T6.17 | ✅ Checklist IR |
+| T6.18 | ✅ Insights |
 
 ---
 

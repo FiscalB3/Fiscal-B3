@@ -44,6 +44,41 @@ function mockApi(overrides: Partial<ApiClient> = {}): ApiClient {
       ],
     }),
     getLossCarryforward: vi.fn().mockResolvedValue({ points: [] }),
+    getDarfBreakdown: vi.fn().mockResolvedValue({
+      month: "2024-03",
+      grossResult: { cents: 150000 },
+      exemptionApplied: { cents: 0 },
+      taxableBase: { cents: 150000 },
+      ratePercent: 15,
+      darf: { cents: 22500 },
+    }),
+    getInsights: vi.fn().mockResolvedValue({
+      cards: [
+        { id: "fii-share", title: "Concentração em FIIs", body: "31% do custo investido está em FIIs." },
+        { id: "top-darf", title: "Maior DARF", body: "O mês 2024-03 teve o maior DARF." },
+      ],
+    }),
+    getYearComparison: vi.fn().mockResolvedValue({
+      yearA: 2023,
+      yearB: 2024,
+      costA: { cents: 500000 },
+      costB: { cents: 773400 },
+      incomeA: { cents: 10000 },
+      incomeB: { cents: 32500 },
+      darfA: { cents: 0 },
+      darfB: { cents: 34500 },
+    }),
+    getPortfolioCostEvolution: vi.fn().mockResolvedValue({
+      points: [
+        { month: "2024-01", costCents: 500000 },
+        { month: "2024-03", costCents: 773400 },
+      ],
+    }),
+    simulateSale: vi.fn().mockResolvedValue({
+      estimatedGainCents: 6500,
+      estimatedTaxCents: 975,
+      persisted: false,
+    }),
     getApuration: vi.fn(),
     getDeclaration: vi.fn(),
     getDeclarationCsvUrl: vi.fn((year: number) => `/declaration.csv?year=${year}`),
@@ -69,11 +104,14 @@ describe("Web UI", () => {
   it("shows dashboard KPIs from API", async () => {
     render(<App api={mockApi({ getDashboard: vi.fn().mockResolvedValue(sampleDashboard) })} />);
     expect(await screen.findByText("Custo investido")).toBeInTheDocument();
-    expect(screen.getByText("R$ 7734,00")).toBeInTheDocument();
+    expect(screen.getAllByText("R$ 7734,00").length).toBeGreaterThan(0);
     expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.getAllByText("R$ 225,00").length).toBeGreaterThan(0);
     expect(screen.getByText("42.5%")).toBeInTheDocument();
     expect(screen.getByTestId("exemption-meter")).toHaveClass("is-ok");
+    expect(await screen.findByTestId("insight-cards")).toBeInTheDocument();
+    expect(screen.getByTestId("darf-breakdown")).toBeInTheDocument();
+    expect(screen.getByTestId("cost-evolution")).toBeInTheDocument();
   });
 
   it("shows empty dashboard state", async () => {
@@ -390,5 +428,27 @@ describe("Web UI", () => {
     const { container } = render(<App api={mockApi()} />);
     expect(container.querySelector(".print-root")).toBeInTheDocument();
     expect(container.querySelector(".topbar")).toHaveClass("no-print");
+  });
+
+  it("shows year comparison side by side", async () => {
+    render(<App api={mockApi()} initialTab="compare" />);
+    expect(await screen.findByTestId("year-comparison")).toBeInTheDocument();
+    expect(screen.getByText("2023")).toBeInTheDocument();
+    expect(screen.getByText("2024")).toBeInTheDocument();
+  });
+
+  it("simulates a sale without persisting", async () => {
+    const user = userEvent.setup();
+    const simulateSale = vi.fn().mockResolvedValue({
+      estimatedGainCents: 6500,
+      estimatedTaxCents: 975,
+      persisted: false,
+    });
+    render(<App api={mockApi({ simulateSale })} initialTab="simulate" />);
+    const buttons = screen.getAllByRole("button", { name: /^Simular$/ });
+    await user.click(buttons[buttons.length - 1]);
+    expect(await screen.findByTestId("simulate-result")).toBeInTheDocument();
+    expect(simulateSale).toHaveBeenCalled();
+    expect(screen.getByText(/Não persistido/)).toBeInTheDocument();
   });
 });

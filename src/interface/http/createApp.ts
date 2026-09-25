@@ -1,15 +1,20 @@
 import express, { type Express, type Request, type Response } from "express";
 import multer from "multer";
 import type { GetAnnualDeclaration } from "../../application/ports/GetAnnualDeclaration";
+import type { GetDarfBreakdown } from "../../application/ports/GetDarfBreakdown";
 import type { GetDarfCalendar } from "../../application/ports/GetDarfCalendar";
 import type { GetDashboard } from "../../application/ports/GetDashboard";
+import type { GetInsights } from "../../application/ports/GetInsights";
 import type { GetLossCarryforward } from "../../application/ports/GetLossCarryforward";
 import type { GetModalityBreakdown } from "../../application/ports/GetModalityBreakdown";
 import type { GetMonthlyApuration } from "../../application/ports/GetMonthlyApuration";
 import type { GetPortfolio } from "../../application/ports/GetPortfolio";
 import type { GetTimeline } from "../../application/ports/GetTimeline";
+import type { GetPortfolioCostEvolution } from "../../application/ports/GetPortfolioCostEvolution";
+import type { GetYearComparison } from "../../application/ports/GetYearComparison";
 import type { ImportOperations } from "../../application/ports/ImportOperations";
 import type { ResetDemo } from "../../application/ports/ResetDemo";
+import type { SimulateSale } from "../../application/ports/SimulateSale";
 import {
   serializeAnnualDeclaration,
   serializeDashboard,
@@ -28,6 +33,11 @@ export type AppPorts = {
   getDarfCalendar: GetDarfCalendar;
   getModalityBreakdown: GetModalityBreakdown;
   getLossCarryforward: GetLossCarryforward;
+  getDarfBreakdown: GetDarfBreakdown;
+  getInsights: GetInsights;
+  getYearComparison: GetYearComparison;
+  getPortfolioCostEvolution: GetPortfolioCostEvolution;
+  simulateSale: SimulateSale;
   resetDemo: ResetDemo;
 };
 
@@ -47,6 +57,7 @@ const upload = multer({
 
 export function createApp(ports: AppPorts): Express {
   const app = express();
+  app.use(express.json());
 
   app.get("/health", (_req, res) => {
     res.status(200).json({ status: "ok" });
@@ -151,6 +162,82 @@ export function createApp(ports: AppPorts): Express {
           swing: serializeMoney(point.swing),
         })),
       });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/darf-breakdown", async (req, res, next) => {
+    try {
+      const month = typeof req.query.month === "string" ? req.query.month : "";
+      if (!MONTH_PATTERN.test(month)) {
+        res.status(400).json({ error: "Query parameter month is required as YYYY-MM" });
+        return;
+      }
+      const breakdown = await ports.getDarfBreakdown.execute({ month });
+      res.status(200).json({
+        month: breakdown.month,
+        grossResult: serializeMoney(breakdown.grossResult),
+        exemptionApplied: serializeMoney(breakdown.exemptionApplied),
+        taxableBase: serializeMoney(breakdown.taxableBase),
+        ratePercent: breakdown.ratePercent,
+        darf: serializeMoney(breakdown.darf),
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/insights", async (req, res, next) => {
+    try {
+      const month = typeof req.query.month === "string" ? req.query.month : "";
+      if (!MONTH_PATTERN.test(month)) {
+        res.status(400).json({ error: "Query parameter month is required as YYYY-MM" });
+        return;
+      }
+      const insights = await ports.getInsights.execute({ month });
+      res.status(200).json(insights);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/year-comparison", async (req, res, next) => {
+    try {
+      const yearA = Number.parseInt(typeof req.query.yearA === "string" ? req.query.yearA : "", 10);
+      const yearB = Number.parseInt(typeof req.query.yearB === "string" ? req.query.yearB : "", 10);
+      if (!Number.isInteger(yearA) || !Number.isInteger(yearB)) {
+        res.status(400).json({ error: "Query parameters yearA and yearB are required" });
+        return;
+      }
+      const comparison = await ports.getYearComparison.execute({ yearA, yearB });
+      res.status(200).json(comparison);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/portfolio-cost-evolution", async (_req, res, next) => {
+    try {
+      const series = await ports.getPortfolioCostEvolution.execute();
+      res.status(200).json(series);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/simulate-sale", async (req, res, next) => {
+    try {
+      const ticker = typeof req.body?.ticker === "string" ? req.body.ticker : "";
+      const quantity = Number(req.body?.quantity);
+      const priceCents = Number(req.body?.priceCents);
+      const month = typeof req.body?.month === "string" ? req.body.month : "";
+      if (!ticker || !Number.isInteger(quantity) || quantity <= 0 || !Number.isInteger(priceCents) || !MONTH_PATTERN.test(month)) {
+        res.status(400).json({ error: "ticker, quantity, priceCents and month are required" });
+        return;
+      }
+      const result = await ports.simulateSale.execute({ ticker, quantity, priceCents, month });
+      res.status(200).json(result);
     } catch (error) {
       next(error);
     }

@@ -5,12 +5,17 @@ import {
   type AnnualDeclarationJson,
   type ApiClient,
   type DashboardJson,
+  type DarfBreakdownJson,
   type DarfObligationJson,
+  type InsightsJson,
+  type CostEvolutionJson,
   type LossCarryforwardJson,
   type ModalityBreakdownJson,
   type MonthlyApurationJson,
   type PositionJson,
+  type SimulateSaleJson,
   type TimelineEventJson,
+  type YearComparisonJson,
 } from "./api";
 import { AllocationChart, CompareBars, IncomeBars } from "./charts";
 import "./styles.css";
@@ -20,6 +25,8 @@ type Tab =
   | "timeline"
   | "darf"
   | "losses"
+  | "compare"
+  | "simulate"
   | "upload"
   | "portfolio"
   | "apuration"
@@ -42,6 +49,8 @@ const NAV: Array<{ id: Tab; label: string }> = [
   { id: "timeline", label: "Linha do tempo" },
   { id: "darf", label: "DARF" },
   { id: "losses", label: "Prejuízos" },
+  { id: "compare", label: "Anos" },
+  { id: "simulate", label: "Simular" },
   { id: "upload", label: "Importar" },
   { id: "portfolio", label: "Carteira" },
   { id: "apuration", label: "Apuração" },
@@ -53,6 +62,16 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
   const [tab, setTab] = useState<Tab>(initialTab);
   const [dashboard, setDashboard] = useState<LoadState<DashboardJson>>({ status: "idle" });
   const [modality, setModality] = useState<LoadState<ModalityBreakdownJson>>({ status: "idle" });
+  const [insights, setInsights] = useState<LoadState<InsightsJson>>({ status: "idle" });
+  const [darfBreakdown, setDarfBreakdown] = useState<LoadState<DarfBreakdownJson>>({ status: "idle" });
+  const [costEvolution, setCostEvolution] = useState<LoadState<CostEvolutionJson>>({ status: "idle" });
+  const [yearComparison, setYearComparison] = useState<LoadState<YearComparisonJson>>({ status: "idle" });
+  const [simulation, setSimulation] = useState<LoadState<SimulateSaleJson>>({ status: "idle" });
+  const [checklist, setChecklist] = useState({ bens: false, rendimentos: false, darf: false });
+  const [simTicker, setSimTicker] = useState("PETR4");
+  const [simQty, setSimQty] = useState("10");
+  const [simPrice, setSimPrice] = useState("35.00");
+  const [yearB, setYearB] = useState("2023");
   const [timeline, setTimeline] = useState<LoadState<TimelineEventJson[]>>({ status: "idle" });
   const [darfCalendar, setDarfCalendar] = useState<LoadState<DarfObligationJson[]>>({
     status: "idle",
@@ -111,6 +130,9 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
     let cancelled = false;
     setDashboard({ status: "loading" });
     setModality({ status: "loading" });
+    setInsights({ status: "loading" });
+    setDarfBreakdown({ status: "loading" });
+    setCostEvolution({ status: "loading" });
     api
       .getDashboard(month)
       .then((data) => {
@@ -139,10 +161,59 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
           message: "Não foi possível carregar day trade vs swing.",
         });
       });
+    api
+      .getInsights(month)
+      .then((data) => {
+        if (cancelled) return;
+        setInsights({ status: "success", data });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setInsights({ status: "error", message: "Não foi possível carregar insights." });
+      });
+    api
+      .getDarfBreakdown(month)
+      .then((data) => {
+        if (cancelled) return;
+        setDarfBreakdown({ status: "success", data });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setDarfBreakdown({ status: "error", message: "Não foi possível explicar o DARF." });
+      });
+    api
+      .getPortfolioCostEvolution()
+      .then((data) => {
+        if (cancelled) return;
+        setCostEvolution({ status: "success", data });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setCostEvolution({ status: "error", message: "Não foi possível carregar a evolução do custo." });
+      });
     return () => {
       cancelled = true;
     };
   }, [api, tab, month, dashboardReload]);
+
+  useEffect(() => {
+    if (tab !== "compare") return;
+    let cancelled = false;
+    setYearComparison({ status: "loading" });
+    api
+      .getYearComparison(Number.parseInt(yearB, 10), Number.parseInt(year, 10))
+      .then((data) => {
+        if (cancelled) return;
+        setYearComparison({ status: "success", data });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setYearComparison({ status: "error", message: "Não foi possível comparar os anos." });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [api, tab, year, yearB]);
 
   useEffect(() => {
     if (tab !== "timeline") return;
@@ -467,6 +538,49 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
                 {modality.message}
               </p>
             )}
+            {darfBreakdown.status === "success" && (
+              <div className="asset-detail" data-testid="darf-breakdown">
+                <h3>Por que este DARF?</h3>
+                <p>Resultado: {formatCents(darfBreakdown.data.grossResult.cents)}</p>
+                <p>Isenção aplicada: {formatCents(darfBreakdown.data.exemptionApplied.cents)}</p>
+                <p>Base tributável: {formatCents(darfBreakdown.data.taxableBase.cents)}</p>
+                <p>Alíquota: {darfBreakdown.data.ratePercent}%</p>
+                <p>DARF: {formatCents(darfBreakdown.data.darf.cents)}</p>
+              </div>
+            )}
+            {insights.status === "success" && (
+              <div className="modality-grid" data-testid="insight-cards">
+                {insights.data.cards.map((card) => (
+                  <article key={card.id} className="modality-card">
+                    <h3>{card.title}</h3>
+                    <p>{card.body}</p>
+                  </article>
+                ))}
+              </div>
+            )}
+            {costEvolution.status === "success" && (
+              <div className="table-wrap" data-testid="cost-evolution">
+                <h3 className="section-title" style={{ marginTop: "1.25rem" }}>
+                  Evolução do custo
+                </h3>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Mês</th>
+                      <th>Custo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {costEvolution.data.points.map((point) => (
+                      <tr key={point.month}>
+                        <td>{point.month}</td>
+                        <td>{formatCents(point.costCents)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         )}
 
@@ -603,6 +717,96 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
                   </tbody>
                 </table>
               </div>
+            )}
+          </section>
+        )}
+
+        {tab === "compare" && (
+          <section className="panel">
+            <h2 className="section-title">Comparativo anual</h2>
+            <p className="section-lead">Compare custo, rendimentos e DARF entre dois anos.</p>
+            <div className="field">
+              <label htmlFor="year-a">Ano A</label>
+              <input id="year-a" value={yearB} onChange={(e) => setYearB(e.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="year-b">Ano B</label>
+              <input id="year-b" value={year} onChange={(e) => setYear(e.target.value)} />
+            </div>
+            {yearComparison.status === "success" && (
+              <div className="modality-grid" data-testid="year-comparison">
+                <article className="modality-card">
+                  <h3>{yearComparison.data.yearA}</h3>
+                  <p>Custo: {formatCents(yearComparison.data.costA.cents)}</p>
+                  <p>Rendimentos: {formatCents(yearComparison.data.incomeA.cents)}</p>
+                  <p>DARF: {formatCents(yearComparison.data.darfA.cents)}</p>
+                </article>
+                <article className="modality-card">
+                  <h3>{yearComparison.data.yearB}</h3>
+                  <p>Custo: {formatCents(yearComparison.data.costB.cents)}</p>
+                  <p>Rendimentos: {formatCents(yearComparison.data.incomeB.cents)}</p>
+                  <p>DARF: {formatCents(yearComparison.data.darfB.cents)}</p>
+                </article>
+              </div>
+            )}
+            {yearComparison.status === "error" && (
+              <p className="state state-error" role="alert">
+                {yearComparison.message}
+              </p>
+            )}
+          </section>
+        )}
+
+        {tab === "simulate" && (
+          <section className="panel">
+            <h2 className="section-title">Simular venda</h2>
+            <p className="section-lead">Estime ganho e IR do mês sem gravar a operação.</p>
+            <form
+              className="stack"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setSimulation({ status: "loading" });
+                const priceCents = Math.round(Number.parseFloat(simPrice) * 100);
+                void api
+                  .simulateSale({
+                    ticker: simTicker,
+                    quantity: Number.parseInt(simQty, 10),
+                    priceCents,
+                    month,
+                  })
+                  .then((data) => setSimulation({ status: "success", data }))
+                  .catch(() =>
+                    setSimulation({ status: "error", message: "Não foi possível simular a venda." }),
+                  );
+              }}
+            >
+              <div className="field">
+                <label htmlFor="sim-ticker">Ticker</label>
+                <input id="sim-ticker" value={simTicker} onChange={(e) => setSimTicker(e.target.value)} />
+              </div>
+              <div className="field">
+                <label htmlFor="sim-qty">Quantidade</label>
+                <input id="sim-qty" value={simQty} onChange={(e) => setSimQty(e.target.value)} />
+              </div>
+              <div className="field">
+                <label htmlFor="sim-price">Preço (R$)</label>
+                <input id="sim-price" value={simPrice} onChange={(e) => setSimPrice(e.target.value)} />
+              </div>
+              <button className="btn-primary" type="submit">
+                Simular
+              </button>
+            </form>
+            {simulation.status === "success" && (
+              <div className="asset-detail" data-testid="simulate-result">
+                <p>Ganho/perda estimado: {formatCents(simulation.data.estimatedGainCents)}</p>
+                <p>IR estimado: {formatCents(simulation.data.estimatedTaxCents)}</p>
+                <p>Não persistido</p>
+              </div>
+            )}
+            {simulation.status === "error" && (
+              <p className="state state-error" role="alert">
+                {simulation.message}
+              </p>
             )}
           </section>
         )}
@@ -857,6 +1061,35 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
             )}
             {declaration.status === "success" && (
               <>
+                <div className="asset-detail" data-testid="declaration-checklist">
+                  <h3>Checklist da declaração</h3>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={checklist.bens}
+                      onChange={(e) => setChecklist((c) => ({ ...c, bens: e.target.checked }))}
+                    />{" "}
+                    Bens e direitos conferidos ({declaration.data.bensEDireitos.length} itens)
+                  </label>
+                  <br />
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={checklist.rendimentos}
+                      onChange={(e) => setChecklist((c) => ({ ...c, rendimentos: e.target.checked }))}
+                    />{" "}
+                    Rendimentos conferidos ({declaration.data.rendimentos.length} linhas)
+                  </label>
+                  <br />
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={checklist.darf}
+                      onChange={(e) => setChecklist((c) => ({ ...c, darf: e.target.checked }))}
+                    />{" "}
+                    DARF do ano revisado
+                  </label>
+                </div>
                 <h3 className="section-title" style={{ marginTop: "1.25rem" }}>
                   Bens e direitos
                 </h3>

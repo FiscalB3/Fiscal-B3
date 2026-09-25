@@ -1,5 +1,10 @@
 import type { GetAnnualDeclaration, AnnualDeclaration } from "../../application/ports/GetAnnualDeclaration";
+import type { GetDarfBreakdown, DarfBreakdown } from "../../application/ports/GetDarfBreakdown";
 import type { GetDarfCalendar, DarfObligation } from "../../application/ports/GetDarfCalendar";
+import type { GetInsights, InsightSet } from "../../application/ports/GetInsights";
+import type { GetPortfolioCostEvolution, PortfolioCostEvolution } from "../../application/ports/GetPortfolioCostEvolution";
+import type { GetYearComparison, YearComparison } from "../../application/ports/GetYearComparison";
+import type { SimulateSale, SimulateSaleResult } from "../../application/ports/SimulateSale";
 import type { GetDashboard, DashboardSummary } from "../../application/ports/GetDashboard";
 import type { GetLossCarryforward, LossCarryforwardSeries } from "../../application/ports/GetLossCarryforward";
 import type { GetModalityBreakdown, ModalityBreakdown } from "../../application/ports/GetModalityBreakdown";
@@ -442,6 +447,112 @@ export function createMockPorts(options?: {
     },
   };
 
+
+  const getDarfBreakdown: GetDarfBreakdown = {
+    async execute({ month }): Promise<DarfBreakdown> {
+      const apuration = await getMonthlyApuration.execute({ month });
+      const gross = Money.fromCents(apuration.result.toCents());
+      const exemption = Money.fromCents(apuration.exemptionApplied.toCents());
+      const taxable = Money.fromCents(Math.max(0, gross.toCents() - exemption.toCents()));
+      return {
+        month,
+        grossResult: gross,
+        exemptionApplied: exemption,
+        taxableBase: taxable,
+        ratePercent: 15,
+        darf: Money.fromCents(apuration.darf.toCents()),
+      };
+    },
+  };
+
+  const getInsights: GetInsights = {
+    async execute({ month }): Promise<InsightSet> {
+      const dash = await getDashboard.execute({ month });
+      const fiiCost = portfolio
+        .filter((row) => row.ticker.endsWith("11"))
+        .reduce((sum, row) => sum + row.acquisitionCost.toCents(), 0);
+      const fiiPct =
+        dash.investedCost.toCents() === 0
+          ? 0
+          : Math.round((fiiCost / dash.investedCost.toCents()) * 1000) / 10;
+      const darfMonthsSorted = [...darfMonths].sort((a, b) => b.darfCents - a.darfCents);
+      const top = darfMonthsSorted[0];
+      return {
+        cards: [
+          {
+            id: "fii-share",
+            title: "Concentração em FIIs",
+            body: `${fiiPct}% do custo investido está em FIIs.`,
+          },
+          {
+            id: "top-darf",
+            title: "Maior DARF",
+            body: top
+              ? `O mês ${top.month} teve o maior DARF (${(top.darfCents / 100).toFixed(2)}).`
+              : "Sem DARF no período.",
+          },
+          {
+            id: "exemption",
+            title: "Isenção do mês",
+            body: `${dash.exemptionPercentUsed}% da isenção de ações swing já foi usada.`,
+          },
+        ],
+      };
+    },
+  };
+
+
+  const getPortfolioCostEvolution: GetPortfolioCostEvolution = {
+    async execute(): Promise<PortfolioCostEvolution> {
+      const base = demoActive ? 1_500_000 : 500_000;
+      return {
+        points: [
+          { month: "2024-01", costCents: base },
+          { month: "2024-02", costCents: base + 400_000 },
+          { month: "2024-03", costCents: sumAcquisitionCost(portfolio).toCents() },
+        ],
+      };
+    },
+  };
+
+  const simulateSale: SimulateSale = {
+    async execute({ ticker, quantity, priceCents }): Promise<SimulateSaleResult> {
+      const position = portfolio.find((row) => row.ticker === ticker);
+      if (!position) {
+        return { estimatedGainCents: 0, estimatedTaxCents: 0, persisted: false };
+      }
+      const avg = position.averagePrice.toCents();
+      const gain = (priceCents - avg) * quantity;
+      const tax = gain > 0 ? Math.floor(gain * 0.15) : 0;
+      return { estimatedGainCents: gain, estimatedTaxCents: tax, persisted: false };
+    },
+  };
+
+  const getYearComparison: GetYearComparison = {
+    async execute({ yearA, yearB }): Promise<YearComparison> {
+      const declA = await getAnnualDeclaration.execute({ year: yearA });
+      const declB = await getAnnualDeclaration.execute({ year: yearB });
+      const cost = (d: typeof declA) =>
+        d.bensEDireitos.reduce((s, r) => s + r.acquisitionCost.toCents(), 0);
+      const income = (d: typeof declA) =>
+        d.rendimentos.reduce((s, r) => s + r.amount.toCents(), 0);
+      const darfFor = (year: number) =>
+        darfMonths
+          .filter((m) => m.month.startsWith(`${year}-`))
+          .reduce((s, m) => s + m.darfCents, 0);
+      return {
+        yearA,
+        yearB,
+        costA: { cents: cost(declA) },
+        costB: { cents: cost(declB) },
+        incomeA: { cents: income(declA) },
+        incomeB: { cents: income(declB) },
+        darfA: { cents: darfFor(yearA) },
+        darfB: { cents: darfFor(yearB) },
+      };
+    },
+  };
+
   return {
     importOperations,
     getPortfolio,
@@ -452,6 +563,11 @@ export function createMockPorts(options?: {
     getDarfCalendar,
     getModalityBreakdown,
     getLossCarryforward,
+    getDarfBreakdown,
+    getInsights,
+    getYearComparison,
+    getPortfolioCostEvolution,
+    simulateSale,
     resetDemo,
   };
 }

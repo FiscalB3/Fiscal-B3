@@ -76,6 +76,37 @@ export type LossCarryforwardJson = {
   points: LossCarryforwardPointJson[];
 };
 
+export type DarfBreakdownJson = {
+  month: string;
+  grossResult: MoneyJson;
+  exemptionApplied: MoneyJson;
+  taxableBase: MoneyJson;
+  ratePercent: number;
+  darf: MoneyJson;
+};
+
+export type InsightCardJson = { id: string; title: string; body: string };
+export type InsightsJson = { cards: InsightCardJson[] };
+
+export type YearComparisonJson = {
+  yearA: number;
+  yearB: number;
+  costA: MoneyJson;
+  costB: MoneyJson;
+  incomeA: MoneyJson;
+  incomeB: MoneyJson;
+  darfA: MoneyJson;
+  darfB: MoneyJson;
+};
+
+export type CostEvolutionJson = { points: Array<{ month: string; costCents: number }> };
+
+export type SimulateSaleJson = {
+  estimatedGainCents: number;
+  estimatedTaxCents: number;
+  persisted: false;
+};
+
 export type ApiClient = {
   getPortfolio(): Promise<PositionJson[]>;
   getDashboard(month: string): Promise<DashboardJson>;
@@ -83,6 +114,16 @@ export type ApiClient = {
   getDarfCalendar(year?: number): Promise<DarfObligationJson[]>;
   getModalityBreakdown(month: string): Promise<ModalityBreakdownJson>;
   getLossCarryforward(year?: number): Promise<LossCarryforwardJson>;
+  getDarfBreakdown(month: string): Promise<DarfBreakdownJson>;
+  getInsights(month: string): Promise<InsightsJson>;
+  getYearComparison(yearA: number, yearB: number): Promise<YearComparisonJson>;
+  getPortfolioCostEvolution(): Promise<CostEvolutionJson>;
+  simulateSale(input: {
+    ticker: string;
+    quantity: number;
+    priceCents: number;
+    month: string;
+  }): Promise<SimulateSaleJson>;
   getApuration(month: string): Promise<MonthlyApurationJson>;
   getDeclaration(year: number): Promise<AnnualDeclarationJson>;
   getDeclarationCsvUrl(year: number): string;
@@ -142,6 +183,52 @@ export function createApiClient(baseUrl = ""): ApiClient {
         throw new Error("Failed to load loss carryforward");
       }
       return (await res.json()) as LossCarryforwardJson;
+    },
+
+    async getDarfBreakdown(month: string) {
+      const res = await fetch(`${baseUrl}/darf-breakdown?month=${encodeURIComponent(month)}`);
+      if (!res.ok) {
+        throw new Error("Failed to load DARF breakdown");
+      }
+      return (await res.json()) as DarfBreakdownJson;
+    },
+
+    async getInsights(month: string) {
+      const res = await fetch(`${baseUrl}/insights?month=${encodeURIComponent(month)}`);
+      if (!res.ok) {
+        throw new Error("Failed to load insights");
+      }
+      return (await res.json()) as InsightsJson;
+    },
+
+    async getYearComparison(yearA: number, yearB: number) {
+      const res = await fetch(
+        `${baseUrl}/year-comparison?yearA=${encodeURIComponent(String(yearA))}&yearB=${encodeURIComponent(String(yearB))}`,
+      );
+      if (!res.ok) {
+        throw new Error("Failed to load year comparison");
+      }
+      return (await res.json()) as YearComparisonJson;
+    },
+
+    async getPortfolioCostEvolution() {
+      const res = await fetch(`${baseUrl}/portfolio-cost-evolution`);
+      if (!res.ok) {
+        throw new Error("Failed to load cost evolution");
+      }
+      return (await res.json()) as CostEvolutionJson;
+    },
+
+    async simulateSale(input) {
+      const res = await fetch(`${baseUrl}/simulate-sale`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to simulate sale");
+      }
+      return (await res.json()) as SimulateSaleJson;
     },
 
     async getApuration(month: string) {

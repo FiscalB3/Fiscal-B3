@@ -397,4 +397,57 @@ describe("HTTP API", () => {
     const res = await request(app).get("/declaration.csv");
     expect(res.status).toBe(400);
   });
+
+  it("GET /darf-breakdown explains DARF components without UI math", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).get("/darf-breakdown").query({ month: "2024-03" });
+    expect(res.status).toBe(200);
+    expect(res.body.ratePercent).toBe(15);
+    expect(res.body.darf).toEqual({ cents: 22500 });
+    expect(res.body.grossResult).toEqual({ cents: 150000 });
+  });
+
+  it("GET /insights returns automatic insight cards", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).get("/insights").query({ month: "2024-03" });
+    expect(res.status).toBe(200);
+    expect(res.body.cards.length).toBeGreaterThanOrEqual(2);
+    expect(res.body.cards[0]).toEqual(
+      expect.objectContaining({ id: expect.any(String), title: expect.any(String), body: expect.any(String) }),
+    );
+  });
+
+  it("GET /year-comparison returns side-by-side year metrics", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).get("/year-comparison").query({ yearA: "2023", yearB: "2024" });
+    expect(res.status).toBe(200);
+    expect(res.body.yearA).toBe(2023);
+    expect(res.body.yearB).toBe(2024);
+    expect(res.body.costB.cents).toBeGreaterThan(0);
+  });
+
+  it("GET /portfolio-cost-evolution returns monthly cost series", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).get("/portfolio-cost-evolution");
+    expect(res.status).toBe(200);
+    expect(res.body.points.length).toBeGreaterThanOrEqual(2);
+    expect(res.body.points[0]).toEqual(expect.objectContaining({ month: expect.any(String), costCents: expect.any(Number) }));
+  });
+
+  it("POST /simulate-sale estimates IR without persisting", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app)
+      .post("/simulate-sale")
+      .send({ ticker: "PETR4", quantity: 10, priceCents: 3500, month: "2024-03" });
+    expect(res.status).toBe(200);
+    expect(res.body.persisted).toBe(false);
+    expect(res.body.estimatedGainCents).toBe((3500 - 2850) * 10);
+    expect(res.body.estimatedTaxCents).toBe(Math.floor(((3500 - 2850) * 10) * 0.15));
+  });
+
+  it("POST /simulate-sale validates payload", async () => {
+    const app = createApp(createMockPorts());
+    const res = await request(app).post("/simulate-sale").send({});
+    expect(res.status).toBe(400);
+  });
 });

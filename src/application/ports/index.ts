@@ -8,3 +8,8 @@ export type { GetLossCarryforward, LossCarryforwardSeries, LossCarryforwardPoint
 export type { ResetDemo, ResetDemoResult } from "./ResetDemo";
 export type { GetPortfolio } from "./GetPortfolio";
 export type { ImportOperations, ImportResult, ImportSource, ImportLineError } from "./ImportOperations";
+export type { GetDarfBreakdown, DarfBreakdown } from "./GetDarfBreakdown";
+export type { GetInsights, InsightSet, InsightCard } from "./GetInsights";
+export type { GetYearComparison, YearComparison } from "./GetYearComparison";
+export type { GetPortfolioCostEvolution, PortfolioCostEvolution, CostEvolutionPoint } from "./GetPortfolioCostEvolution";
+export type { SimulateSale, SimulateSaleInput, SimulateSaleResult } from "./SimulateSale";
