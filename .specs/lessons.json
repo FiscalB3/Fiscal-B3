@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 4,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "ac_gap::cover declaration checklist render and conferido toggles in app test tsx done when requires 4 tests",
+      "text": "Cover declaration-checklist render and conferido toggles in App.test.tsx; Done when requires ≥4 tests.",
+      "signal": "ac_gap",
+      "scope": "src/interface/web",
+      "status": "candidate",
+      "features": [
+        "mvp-consolidador"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "T6E-17 (src/interface/web)"
+      ],
+      "created": "2026-09-25T12:29:47Z",
+      "last_seen": "2026-09-25T12:29:47Z"
+    },
+    {
+      "id": "L-002",
+      "key": "ac_gap::add a vitest assertion for ocean theme css tokens from design md visual only theme changes currently have zero test evidence",
+      "text": "Add a Vitest assertion for ocean theme CSS tokens from DESIGN.md; visual-only theme changes currently have zero test evidence.",
+      "signal": "ac_gap",
+      "scope": "src/interface/web",
+      "status": "candidate",
+      "features": [
+        "mvp-consolidador"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "T6E-01 (src/interface/web)"
+      ],
+      "created": "2026-09-25T12:29:49Z",
+      "last_seen": "2026-09-25T12:29:49Z"
+    },
+    {
+      "id": "L-003",
+      "key": "ac_gap::test swing only sold volume feeding exemption meter fii day sales must not increment usedcents once wired beyond mocks",
+      "text": "Test swing-only sold volume feeding exemption meter; FII/day sales must not increment usedCents once wired beyond mocks.",
+      "signal": "ac_gap",
+      "scope": "src/domain/tax",
+      "status": "candidate",
+      "features": [
+        "mvp-consolidador"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "T6E-06 (src/domain/tax)"
+      ],
+      "created": "2026-09-25T12:29:49Z",
+      "last_seen": "2026-09-25T12:29:49Z"
+    }
+  ]
+}
