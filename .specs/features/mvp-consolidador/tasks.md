@@ -13,7 +13,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Fonte de produto**: PDF *Consolidador B3 - Projeto e MVP* + `AGENTS.md`
 **Design**: ainda não há `design.md`; os caminhos seguem hexagonal + schema do PDF
 **Spec**: ainda não há `spec.md` confirmada; IDs `MVP-NN` são o catálogo provisório
-**Status**: T1–T4 concluídas; T5–T7 pendentes
+**Status**: T1–T5 concluídas; T6–T7 pendentes
 
 ---
 
@@ -258,6 +258,9 @@ T7
 
 ### T5: Build Postgres persistence
 
+**Status**: ✅ Concluída
+**Validation**: `npm test && npm run test:integration` → sucesso; 1 arquivo de teste de integração, 6 testes aprovados (suíte unitária sem alteração).
+
 **What**: Migrations e repositórios de ativos, operações, proventos e eventos corporativos.
 **Where**: `src/infrastructure/persistence/`
 **Depends on**: T1
@@ -273,11 +276,11 @@ T7
 
 **Done when**:
 
-- [ ] Migrations `ativos`, `operacoes`, `proventos`, `eventos_corporativos`
-- [ ] Repositórios inserem e listam em ordem cronológica
-- [ ] Nenhum campo derivado é editável na mão
-- [ ] Gate check passes: `npm test && npm run test:integration`
-- [ ] Test count: 6 integration tests pass (no silent deletions)
+- [x] Migrations `ativos`, `operacoes`, `proventos`, `eventos_corporativos`
+- [x] Repositórios inserem e listam em ordem cronológica
+- [x] Nenhum campo derivado é editável na mão
+- [x] Gate check passes: `npm test && npm run test:integration`
+- [x] Test count: 6 integration tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full
@@ -385,7 +388,7 @@ Granularidade pedida: **módulo / workstream**, não uma função por tarefa.
 | T2 | Motor de posição | ✅ Concluída |
 | T3 | Motor fiscal | ✅ Concluída |
 | T4 | Importação | ✅ Concluída |
-| T5 | Persistência | Pendente |
+| T5 | Persistência | ✅ Concluída |
 | T6 | API + UI | Pendente |
 | T7 | Wiring | Pendente |
 
