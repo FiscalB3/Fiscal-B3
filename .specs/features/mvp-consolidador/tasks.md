@@ -622,28 +622,17 @@ T6.1 → T6.2 → T6.3 → T6.6 → T6.14 → T6.18 → T6.16 → T6.7 → T6.8 
 
 ## Task Granularity Check
 
-| Task | Status |
-| ---- | ------ |
-| T1–T4, T6 | ✅ |
-| T5, T7 | Pendente |
-| T6.1 | ✅ Tema oceano |
-| T6.2 | ✅ Seed demo |
-| T6.3 | ✅ Dashboard KPIs |
-| T6.4 | ✅ Timeline |
-| T6.5 | ✅ Calendário DARF |
-| T6.6 | ✅ Medidor isenção |
-| T6.7 | ✅ Day vs swing |
-| T6.8 | ✅ Prejuízos |
-| T6.9 | ✅ Detalhe ativo |
-| T6.10 | ✅ Comparativo anual |
-| T6.11 | ✅ Export CSV |
-| T6.12 | ✅ Print IR |
-| T6.13 | ✅ Filtro ticker |
-| T6.14 | ✅ DARF breakdown |
-| T6.15 | ✅ Simulador venda |
-| T6.16 | ✅ Evolução custo |
-| T6.17 | ✅ Checklist IR |
-| T6.18 | ✅ Insights |
+Granularidade pedida: **módulo / workstream**, não uma função por tarefa.
+
+| Task | Scope | Status |
+| ---- | ----- | ------ |
+| T1 | Kernel (tooling + tipos + ports) | ✅ Concluída |
+| T2 | Motor de posição | ✅ Concluída |
+| T3 | Motor fiscal | ✅ Concluída |
+| T4 | Importação | ✅ Concluída |
+| T5 | Persistência | ✅ Concluída |
+| T6 | API + UI | ✅ Concluída |
+| T7 | Wiring | Pendente |
 
 ---
 
@@ -679,8 +668,12 @@ T6.1 → T6.2 → T6.3 → T6.6 → T6.14 → T6.18 → T6.16 → T6.7 → T6.8 
 
 ## Próximo passo de Execute
 
-1. **T6.1** (tema oceano) — pode começar já  
-2. **T6.2** (seed)  
-3. **T6.3** (dashboard)  
-4. Demais T6.x na ordem sugerida  
-5. Em paralelo de infraestrutura: **T5** → **T7**
+| Task | Code Layer Created/Modified | Matrix Requires | Task Says | Status |
+| ---- | --------------------------- | --------------- | --------- | ------ |
+| T1 | domain + config | unit (domínio) | unit | OK |
+| T2 | domain | unit | unit | OK |
+| T3 | domain | unit | unit | OK |
+| T4 | import parsers | unit | unit | OK |
+| T5 | persistence + migrations | integration | integration | OK |
+| T6 | HTTP + UI | integration (maior) | integration | OK |
+| T7 | application + wiring | unit + integration | integration | OK |
