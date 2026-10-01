@@ -1,5 +1,6 @@
 import express, { type Express, type Request, type Response } from "express";
 import multer from "multer";
+import type { PortfolioUseCases } from "../../application/use-cases/createPortfolioUseCases";
 import type { GetAnnualDeclaration } from "../../application/ports/GetAnnualDeclaration";
 import type { GetDarfBreakdown } from "../../application/ports/GetDarfBreakdown";
 import type { GetDarfCalendar } from "../../application/ports/GetDarfCalendar";
@@ -55,9 +56,24 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-export function createApp(ports: AppPorts): Express {
+export function createApp(ports: PortfolioUseCases & Partial<AppPorts>): Express {
   const app = express();
   app.use(express.json());
+
+  const optionalRoutes = {
+    "/dashboard": "getDashboard", "/timeline": "getTimeline", "/darf-calendar": "getDarfCalendar",
+    "/modality-breakdown": "getModalityBreakdown", "/loss-carryforward": "getLossCarryforward",
+    "/darf-breakdown": "getDarfBreakdown", "/insights": "getInsights", "/year-comparison": "getYearComparison",
+    "/portfolio-cost-evolution": "getPortfolioCostEvolution", "/simulate-sale": "simulateSale", "/demo/reset": "resetDemo",
+  } as const;
+  app.use((req, res, next) => {
+    const key = optionalRoutes[req.path as keyof typeof optionalRoutes];
+    if (key && !ports[key]) {
+      res.status(503).json({ error: "Esta função ainda não está integrada aos dados reais." });
+      return;
+    }
+    next();
+  });
 
   app.get("/health", (_req, res) => {
     res.status(200).json({ status: "ok" });
@@ -79,7 +95,7 @@ export function createApp(ports: AppPorts): Express {
         res.status(400).json({ error: "Query parameter month is required as YYYY-MM" });
         return;
       }
-      const summary = await ports.getDashboard.execute({ month });
+      const summary = await ports.getDashboard!.execute({ month });
       res.status(200).json(serializeDashboard(summary));
     } catch (error) {
       next(error);
@@ -88,7 +104,7 @@ export function createApp(ports: AppPorts): Express {
 
   app.get("/timeline", async (_req, res, next) => {
     try {
-      const events = await ports.getTimeline.execute();
+      const events = await ports.getTimeline!.execute();
       res.status(200).json(events);
     } catch (error) {
       next(error);
@@ -106,7 +122,7 @@ export function createApp(ports: AppPorts): Express {
           return;
         }
       }
-      const obligations = await ports.getDarfCalendar.execute(year === undefined ? undefined : { year });
+      const obligations = await ports.getDarfCalendar!.execute(year === undefined ? undefined : { year });
       res.status(200).json(
         obligations.map((row) => ({
           month: row.month,
@@ -126,7 +142,7 @@ export function createApp(ports: AppPorts): Express {
         res.status(400).json({ error: "Query parameter month is required as YYYY-MM" });
         return;
       }
-      const breakdown = await ports.getModalityBreakdown.execute({ month });
+      const breakdown = await ports.getModalityBreakdown!.execute({ month });
       res.status(200).json({
         month: breakdown.month,
         buckets: breakdown.buckets.map((bucket) => ({
@@ -152,7 +168,7 @@ export function createApp(ports: AppPorts): Express {
           return;
         }
       }
-      const series = await ports.getLossCarryforward.execute(
+      const series = await ports.getLossCarryforward!.execute(
         year === undefined ? undefined : { year },
       );
       res.status(200).json({
@@ -174,7 +190,7 @@ export function createApp(ports: AppPorts): Express {
         res.status(400).json({ error: "Query parameter month is required as YYYY-MM" });
         return;
       }
-      const breakdown = await ports.getDarfBreakdown.execute({ month });
+      const breakdown = await ports.getDarfBreakdown!.execute({ month });
       res.status(200).json({
         month: breakdown.month,
         grossResult: serializeMoney(breakdown.grossResult),
@@ -195,7 +211,7 @@ export function createApp(ports: AppPorts): Express {
         res.status(400).json({ error: "Query parameter month is required as YYYY-MM" });
         return;
       }
-      const insights = await ports.getInsights.execute({ month });
+      const insights = await ports.getInsights!.execute({ month });
       res.status(200).json(insights);
     } catch (error) {
       next(error);
@@ -210,7 +226,7 @@ export function createApp(ports: AppPorts): Express {
         res.status(400).json({ error: "Query parameters yearA and yearB are required" });
         return;
       }
-      const comparison = await ports.getYearComparison.execute({ yearA, yearB });
+      const comparison = await ports.getYearComparison!.execute({ yearA, yearB });
       res.status(200).json(comparison);
     } catch (error) {
       next(error);
@@ -219,7 +235,7 @@ export function createApp(ports: AppPorts): Express {
 
   app.get("/portfolio-cost-evolution", async (_req, res, next) => {
     try {
-      const series = await ports.getPortfolioCostEvolution.execute();
+      const series = await ports.getPortfolioCostEvolution!.execute();
       res.status(200).json(series);
     } catch (error) {
       next(error);
@@ -236,7 +252,7 @@ export function createApp(ports: AppPorts): Express {
         res.status(400).json({ error: "ticker, quantity, priceCents and month are required" });
         return;
       }
-      const result = await ports.simulateSale.execute({ ticker, quantity, priceCents, month });
+      const result = await ports.simulateSale!.execute({ ticker, quantity, priceCents, month });
       res.status(200).json(result);
     } catch (error) {
       next(error);
@@ -331,7 +347,7 @@ export function createApp(ports: AppPorts): Express {
 
   app.post("/demo/reset", async (_req, res, next) => {
     try {
-      const result = await ports.resetDemo.execute();
+      const result = await ports.resetDemo!.execute();
       res.status(200).json(result);
     } catch (error) {
       next(error);

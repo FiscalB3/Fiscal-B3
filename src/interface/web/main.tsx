@@ -6,7 +6,7 @@ const root = document.getElementById("root");
 if (root) {
   createRoot(root).render(
     <StrictMode>
-      <App />
+      <App mode={import.meta.env.VITE_FISCAL_B3_MODE === "demo" ? "demo" : "real"} />
     </StrictMode>,
   );
 }

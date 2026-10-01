@@ -22,7 +22,7 @@ function toAsset(row: AtivoRow): Asset {
  * editável na mão. `obterOuCriarId` nunca sobrescreve `kind`/`cnpj`.
  */
 export class AtivoRepository {
-  constructor(private readonly pool: pg.Pool) {}
+  constructor(private readonly pool: Pick<pg.PoolClient, "query">) {}
 
   async obterOuCriarId(asset: Asset): Promise<number> {
     const result = await this.pool.query<{ id: number }>(

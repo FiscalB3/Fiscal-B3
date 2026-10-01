@@ -9,6 +9,7 @@ const { Pool, types } = pg;
 types.setTypeParser(1082, (value: string) => value);
 
 export type PersistenceConfig = {
+  options?: string;
   connectionString?: string;
   host?: string;
   port?: number;
@@ -20,11 +21,13 @@ export type PersistenceConfig = {
 export function createPool(config: PersistenceConfig = {}): pg.Pool {
   if (config.connectionString ?? process.env.DATABASE_URL) {
     return new Pool({
+      options: config.options,
       connectionString: config.connectionString ?? process.env.DATABASE_URL,
     });
   }
 
   return new Pool({
+    options: config.options,
     host: config.host ?? process.env.PGHOST ?? "localhost",
     port: config.port ?? (process.env.PGPORT ? Number(process.env.PGPORT) : 5432),
     user: config.user ?? process.env.PGUSER ?? "fiscal",

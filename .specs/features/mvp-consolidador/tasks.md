@@ -13,7 +13,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Fonte de produto**: PDF *Consolidador B3* + `AGENTS.md` + escopo de apresentação
 **Design**: tema **oceano** (azul + verde-água) em `DESIGN.md`
 **Spec**: IDs `MVP-NN` + `T6E-NN` (expansão da interface)
-**Status**: T1–T4 e T6 base concluídas; T5 e T7 pendentes; **T6.1–T6.18 concluídas** (sem modo Apresentar)
+**Status**: T1–T6 base concluídas (T5 integrada em `999df10`); T7 em implementação; **T6.1–T6.18 concluídas em modo demonstração** (sem modo Apresentar)
 
 ---
 
@@ -157,10 +157,35 @@ T6.1–T6.14(+15–18) **Dependem de T6** (base). Preferem T7 quando existir; at
 | T2 Position engine | ✅ |
 | T3 Tax engine | ✅ |
 | T4 Spreadsheet import | ✅ |
-| T5 Postgres persistence | Pendente |
-| T7 Wire use cases | Pendente |
+| T5 Postgres persistence | ✅ Código integrado; gate reexecutado com T7 |
+| T7 Wire use cases | Em implementação |
 
 Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
+
+### T7: Wire use cases and derived rebuild
+
+**Status**: Em implementação
+**What**: Ligar importação → PostgreSQL → motores T2/T3 → API real para as quatro funções originais. Especificação detalhada em `t7-spec.md`.
+**Where**: `src/application/`, adaptadores de importação/persistência, inicialização HTTP e seleção de modo da interface.
+**Depends on**: T2, T3, T4, T5, T6
+**Requirement**: MVP-12
+**Tools**: Skill tlc-spec-driven
+
+**Done when**:
+
+- [ ] Casos de uso reais substituem mocks nas rotas originais.
+- [ ] Importação inválida não persiste; gravação de lote é atômica.
+- [ ] Posição/apuração são reconstruídas dos eventos e sobrevivem a nova instância.
+- [ ] Ordem cronológica e sequência intradia persistidas; declaração corta em 31/12.
+- [ ] Fluxo CSV/XLSX → posição → mês com DARF → declaração anual coberto.
+- [ ] Modo real não apresenta números fictícios da expansão T6.
+- [ ] Build, unitários e integração PostgreSQL passam; ≥12 testes de integração T7.
+- [ ] Verificador independente e sensor de discriminação aprovam.
+
+**Tests**: unit + integration
+**Gate**: full
+
+**Limite de escopo**: integração da expansão T6 com dados reais fica pendente, conforme premissa de `t7-spec.md`. A T7 reutiliza os motores existentes; não certifica regras fiscais não implementadas por eles.
 
 ---
 

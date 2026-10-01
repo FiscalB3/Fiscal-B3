@@ -1,9 +1,11 @@
 import type pg from "pg";
+import type { PortfolioEvent } from "../../domain/events/PortfolioEvent";
 import type { Asset } from "../../domain/assets/Asset";
 import type { CorporateAction } from "../../domain/corporate-actions/CorporateAction";
 import type { AtivoRepository } from "./AtivoRepository";
 
 type EventoCorporativoRow = {
+  event_sequence: string;
   ticker: string;
   asset_kind: string;
   cnpj: string | null;
@@ -32,7 +34,7 @@ function toCorporateAction(row: EventoCorporativoRow): CorporateAction {
  */
 export class EventoCorporativoRepository {
   constructor(
-    private readonly pool: pg.Pool,
+    private readonly pool: Pick<pg.PoolClient, "query">,
     private readonly ativos: AtivoRepository,
   ) {}
 
@@ -46,12 +48,16 @@ export class EventoCorporativoRepository {
   }
 
   async listar(): Promise<CorporateAction[]> {
+    return (await this.listarEventos()).map((event) => event.action);
+  }
+
+  async listarEventos(): Promise<Extract<PortfolioEvent, { kind: "CORPORATE_ACTION" }>[]> {
     const result = await this.pool.query<EventoCorporativoRow>(
-      `SELECT a.ticker, a.kind AS asset_kind, a.cnpj, e.data, e.kind, e.fator
+      `SELECT e.event_sequence, a.ticker, a.kind AS asset_kind, a.cnpj, e.data, e.kind, e.fator
        FROM eventos_corporativos e
        JOIN ativos a ON a.id = e.ativo_id
        ORDER BY e.data ASC, e.id ASC`,
     );
-    return result.rows.map(toCorporateAction);
+    return result.rows.map((row) => ({ kind: "CORPORATE_ACTION", date: row.data, sequence: Number(row.event_sequence), action: toCorporateAction(row) }));
   }
 }
