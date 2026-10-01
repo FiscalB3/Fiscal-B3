@@ -1,10 +1,12 @@
 import type pg from "pg";
+import type { PortfolioEvent } from "../../domain/events/PortfolioEvent";
 import type { Asset } from "../../domain/assets/Asset";
 import type { Income } from "../../domain/incomes/Income";
 import { Money } from "../../domain/money/Money";
 import type { AtivoRepository } from "./AtivoRepository";
 
 type ProventoRow = {
+  event_sequence: string;
   ticker: string;
   asset_kind: string;
   cnpj: string | null;
@@ -30,7 +32,7 @@ function toIncome(row: ProventoRow): Income {
 /** Somente insere e lista, em ordem cronológica. Sem update/delete. */
 export class ProventoRepository {
   constructor(
-    private readonly pool: pg.Pool,
+    private readonly pool: Pick<pg.PoolClient, "query">,
     private readonly ativos: AtivoRepository,
   ) {}
 
@@ -44,12 +46,16 @@ export class ProventoRepository {
   }
 
   async listar(): Promise<Income[]> {
+    return (await this.listarEventos()).map((event) => event.income);
+  }
+
+  async listarEventos(): Promise<Extract<PortfolioEvent, { kind: "INCOME" }>[]> {
     const result = await this.pool.query<ProventoRow>(
-      `SELECT a.ticker, a.kind AS asset_kind, a.cnpj, p.data, p.kind, p.valor_centavos
+      `SELECT p.event_sequence, a.ticker, a.kind AS asset_kind, a.cnpj, p.data, p.kind, p.valor_centavos
        FROM proventos p
        JOIN ativos a ON a.id = p.ativo_id
        ORDER BY p.data ASC, p.id ASC`,
     );
-    return result.rows.map(toIncome);
+    return result.rows.map((row) => ({ kind: "INCOME", date: row.data, sequence: Number(row.event_sequence), income: toIncome(row) }));
   }
 }

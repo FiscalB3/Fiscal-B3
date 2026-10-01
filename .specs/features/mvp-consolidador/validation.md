@@ -71,3 +71,37 @@ Prior run (pre-fix @ `a23f3c3`): 3/3 mutations killed (simulate tax, exemption t
 1. **`spec.md` missing** — ACs traced only via `tasks.md`
 2. **T6E-06 spec-precision** — contract test documents upstream exclusion; behavioral swing-only aggregation test deferred to **T7** wiring
 3. **Coverage matrix** — no `src/application` unit tests for expansion ports (acceptable with mocks pre-T7)
+
+---
+
+# T7 Validation
+
+**Date**: 2026-09-30
+**Spec**: `.specs/features/mvp-consolidador/t7-spec.md`
+**Diff range**: `999df10..f8fb5b0`
+**Verifier**: independent fresh-eyes review
+
+## Validation: mvp-consolidador T7 — PASS
+
+All 12 T7 acceptance criteria have assertion evidence. `validate_tasks.py` and `validate_spec.py` passed with zero errors and warnings. `npm run build` passed, `npm test` passed with 94 tests, and `npm run test:integration` passed with 60 tests. Runtime smoke testing passed against disposable PostgreSQL.
+
+| AC | Evidence | Result |
+| --- | --- | --- |
+| 1 | `src/infrastructure/t7.integration.test.ts:46`, `:49`, `:52`, `:55`, `:62`, `:65`, `:66` | PASS |
+| 2 | `src/infrastructure/t7.integration.test.ts:74`, `:75` | PASS |
+| 3 | `src/infrastructure/t7.integration.test.ts:81`, `:82` | PASS |
+| 4 | `src/infrastructure/t7.integration.test.ts:98`, `:100` | PASS |
+| 5 | `src/infrastructure/t7.integration.test.ts:111`, `:112`, `:120`, `:121`, `:125` | PASS |
+| 6 | `src/infrastructure/t7.integration.test.ts:131`, `:132` | PASS |
+| 7 | `src/infrastructure/t7.integration.test.ts:140`, `:141`, `:142` | PASS |
+| 8 | `src/infrastructure/t7.integration.test.ts:146`, `:147`; `src/application/use-cases/createPortfolioUseCases.test.ts:70` | PASS |
+| 9 | `src/infrastructure/t7.integration.test.ts:155`, `:156`, `:157` | PASS |
+| 10 | `src/application/use-cases/createPortfolioUseCases.test.ts:59`, `:60`, `:61` | PASS |
+| 11 | `src/interface/web/App.test.tsx:101`, `:103`, `:104`, `:105`–`:107` | PASS |
+| 12 | `src/infrastructure/t7.integration.test.ts:163`, `:164`, `:166`, `:167` | PASS |
+
+## Discrimination sensor
+
+Five isolated behavior mutations were killed by the assertions: empty reconstructed events, removed rollback, incorrect same-day sequence, ignored annual cutoff, and HTTP 200 instead of real-mode 503. Scratch changes were discarded and the real worktree remained clean.
+
+**Overall**: PASS — T7 ready to close.

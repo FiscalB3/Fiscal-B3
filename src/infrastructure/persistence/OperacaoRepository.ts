@@ -1,10 +1,12 @@
 import type pg from "pg";
+import type { PortfolioEvent } from "../../domain/events/PortfolioEvent";
 import type { Asset } from "../../domain/assets/Asset";
 import { Money } from "../../domain/money/Money";
 import type { Operation } from "../../domain/operations/Operation";
 import type { AtivoRepository } from "./AtivoRepository";
 
 type OperacaoRow = {
+  event_sequence: string;
   ticker: string;
   asset_kind: string;
   cnpj: string | null;
@@ -40,7 +42,7 @@ function toOperation(row: OperacaoRow): Operation {
  */
 export class OperacaoRepository {
   constructor(
-    private readonly pool: pg.Pool,
+    private readonly pool: Pick<pg.PoolClient, "query">,
     private readonly ativos: AtivoRepository,
   ) {}
 
@@ -63,14 +65,18 @@ export class OperacaoRepository {
   }
 
   async listar(): Promise<Operation[]> {
+    return (await this.listarEventos()).map((event) => event.operation);
+  }
+
+  async listarEventos(): Promise<Extract<PortfolioEvent, { kind: "OPERATION" }>[]> {
     const result = await this.pool.query<OperacaoRow>(
-      `SELECT a.ticker, a.kind AS asset_kind, a.cnpj,
+      `SELECT o.event_sequence, a.ticker, a.kind AS asset_kind, a.cnpj,
               o.data, o.kind, o.quantidade,
               o.preco_unitario_centavos, o.corretagem_centavos, o.taxas_b3_centavos
        FROM operacoes o
        JOIN ativos a ON a.id = o.ativo_id
        ORDER BY o.data ASC, o.id ASC`,
     );
-    return result.rows.map(toOperation);
+    return result.rows.map((row) => ({ kind: "OPERATION", date: row.data, sequence: Number(row.event_sequence), operation: toOperation(row) }));
   }
 }

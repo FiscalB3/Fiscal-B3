@@ -95,6 +95,18 @@ function mockApi(overrides: Partial<ApiClient> = {}): ApiClient {
 }
 
 describe("Web UI", () => {
+  it("opens real mode on portfolio and offers only integrated sections", async () => {
+    render(<App api={mockApi()} mode="real" />);
+    expect(await screen.findByText("Você ainda não possui posições. Importe suas operações para começar.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Carteira" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByText("Carteira real")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Carregar demonstração" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Simular" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Importar" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Apuração" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Declaração" })).toBeInTheDocument();
+  });
+
   it("opens on dashboard by default", async () => {
     render(<App api={mockApi({ getDashboard: vi.fn().mockResolvedValue(sampleDashboard) })} />);
     expect(await screen.findByTestId("dashboard-kpis")).toBeInTheDocument();

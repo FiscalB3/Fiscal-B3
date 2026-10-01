@@ -4,3 +4,4 @@ coverage/
 dist/
 feat-task-6.bundle
 node_modules/
+.npm-cache/

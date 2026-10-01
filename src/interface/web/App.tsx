@@ -44,6 +44,7 @@ type LoadState<T> =
 export type AppProps = {
   api?: ApiClient;
   initialTab?: Tab;
+  mode?: "real" | "demo";
 };
 
 const NAV: Array<{ id: Tab; label: string }> = [
@@ -59,7 +60,7 @@ const NAV: Array<{ id: Tab; label: string }> = [
   { id: "declaration", label: "Declaração" },
 ];
 
-export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
+export function App({ api: apiProp, mode = "demo", initialTab = mode === "real" ? "portfolio" : "dashboard" }: AppProps) {
   const [api] = useState(() => apiProp ?? createApiClient());
   const [tab, setTab] = useState<Tab>(initialTab);
   const [dashboard, setDashboard] = useState<LoadState<DashboardJson>>({ status: "idle" });
@@ -403,16 +404,16 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
           </div>
         </div>
         <div className="sidebar-actions">
-          <button
+          {mode === "real" ? <p>Carteira real</p> : <button
             type="button"
             className="btn-ghost"
             disabled={demo.status === "loading"}
             onClick={() => void onLoadDemo()}
           >
             {demo.status === "loading" ? "Carregando…" : "Carregar demonstração"}
-          </button>
+          </button>}
           <nav className="nav" aria-label="Seções">
-            {NAV.map((item) => (
+            {NAV.filter((item) => mode === "demo" || ["upload", "portfolio", "apuration", "declaration"].includes(item.id)).map((item) => (
               <button
                 key={item.id}
                 type="button"
@@ -1068,7 +1069,7 @@ export function App({ api: apiProp, initialTab = "dashboard" }: AppProps) {
                 </div>
               </div>
             )}
-            {portfolio.status === "success" && selectedTicker && (
+            {mode === "demo" && portfolio.status === "success" && selectedTicker && (
               <aside className="asset-detail" data-testid="asset-detail">
                 {(() => {
                   const row = portfolio.data.find((item) => item.ticker === selectedTicker);
