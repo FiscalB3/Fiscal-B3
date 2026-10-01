@@ -83,9 +83,24 @@ describe("T7 real PostgreSQL integration (MVP-12)", () => {
   });
 
   it("rolls back earlier writes when PostgreSQL rejects a later row", async () => {
-    const fractional = [...buy]; fractional[5] = "1.5";
-    await expect(createRealPorts(pool).importOperations.execute(source([buy, fractional]))).rejects.toThrow();
-    expect(await counts()).toEqual({ assets: 0, operations: 0, incomes: 0, actions: 0 });
+    await pool.query(`
+      CREATE FUNCTION reject_test_sale() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        IF NEW.kind = 'VENDA' THEN
+          RAISE EXCEPTION 'T7 controlled write failure';
+        END IF;
+        RETURN NEW;
+      END $$;
+      CREATE TRIGGER reject_test_sale BEFORE INSERT ON operacoes
+      FOR EACH ROW EXECUTE FUNCTION reject_test_sale();
+    `);
+    try {
+      await expect(createRealPorts(pool).importOperations.execute(source([buy, sell])))
+        .rejects.toThrow("T7 controlled write failure");
+      expect(await counts()).toEqual({ assets: 0, operations: 0, incomes: 0, actions: 0 });
+    } finally {
+      await pool.query("DROP TRIGGER reject_test_sale ON operacoes; DROP FUNCTION reject_test_sale()");
+    }
   });
 
   it("rebuilds identically with a fresh pool and application", async () => {

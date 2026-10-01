@@ -164,7 +164,7 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 ### T7: Wire use cases and derived rebuild
 
-**Status**: Em implementação
+**Status**: Implementação concluída; validação independente pendente
 **What**: Ligar importação → PostgreSQL → motores T2/T3 → API real para as quatro funções originais. Especificação detalhada em `t7-spec.md`.
 **Where**: `src/application/`, adaptadores de importação/persistência, inicialização HTTP e seleção de modo da interface.
 **Depends on**: T2, T3, T4, T5, T6
@@ -173,13 +173,13 @@ Detalhes de Done when de T1–T5 e T7 permanecem os do plano anterior.
 
 **Done when**:
 
-- [ ] Casos de uso reais substituem mocks nas rotas originais.
-- [ ] Importação inválida não persiste; gravação de lote é atômica.
-- [ ] Posição/apuração são reconstruídas dos eventos e sobrevivem a nova instância.
-- [ ] Ordem cronológica e sequência intradia persistidas; declaração corta em 31/12.
-- [ ] Fluxo CSV/XLSX → posição → mês com DARF → declaração anual coberto.
-- [ ] Modo real não apresenta números fictícios da expansão T6.
-- [ ] Build, unitários e integração PostgreSQL passam; ≥12 testes de integração T7.
+- [x] Casos de uso reais substituem mocks nas rotas originais.
+- [x] Importação inválida não persiste; gravação de lote é atômica.
+- [x] Posição/apuração são reconstruídas dos eventos e sobrevivem a nova instância.
+- [x] Ordem cronológica e sequência intradia persistidas; declaração corta em 31/12.
+- [x] Fluxo CSV/XLSX → posição → mês com DARF → declaração anual coberto.
+- [x] Modo real não apresenta números fictícios da expansão T6.
+- [x] Build, unitários e integração PostgreSQL passam; ≥12 testes de integração T7.
 - [ ] Verificador independente e sensor de discriminação aprovam.
 
 **Tests**: unit + integration

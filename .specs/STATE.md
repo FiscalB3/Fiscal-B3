@@ -5,16 +5,12 @@
 (see feature specs / prior commits)
 
 ## Handoff
-
-- **Feature**: mvp-consolidador / T7, seguindo `.cursor/skills/tlc-spec-driven/SKILL.md`.
-- **Branch**: `main`, base `999df10` (T5 integrada; snapshot anterior estava desatualizado).
-- **Completed**: T1–T6 existentes; T7 ainda NÃO concluída.
-- **In-progress**: `src/application/use-cases/createPortfolioUseCases.ts:22`, `src/infrastructure/persistence/PostgresPortfolioStore.ts:25`, `src/infrastructure/t7.integration.test.ts:85`.
-- **Implemented**: portas reais do núcleo, importação transacional, sequência global persistida, corte anual, modo real/demo separado e instruções README.
-- **Scope assumption**: quatro funções originais da T7; pergunta opcional ao usuário sobre integrar expansão T6 ainda sem resposta. Não confundir demonstração com dados reais.
-- **Validation**: TLC validate_tasks e validate_spec passaram; build TypeScript e Vite passaram; 94 unitários passaram; integração 59/60 (11/12 T7 + 48 existentes).
-- **Blocker**: aguardando confirmação solicitada ao usuário conforme implement.md para corrigir o cenário novo de rollback. Quantidade fracionária é rejeitada no domínio, antes do banco; substituir fixture por falha controlada no segundo INSERT (trigger temporário) e manter rejeição + contagem zero. Não enfraquecer assertions.
-- **Next step**: após confirmação, corrigir cenário, reexecutar gate completo, mapear evidências, commit atômico e Verifier independente com sensor em cópia isolada. Preservar validation.md anterior da T6 como histórico.
-- **Uncommitted files**: .gitignore, package.json/lock, README, tasks/t7-spec, portas/casos de uso/testes T7, adaptador de parsing, repositórios/store/migration 005, composição e server HTTP, seleção de modo UI e teste. Nenhum commit T7 criado.
-- **Environment**: comandos Python via `py -3.12` e Vitest requereram execução fora do sandbox. PostgreSQL descartável `fiscal-b3-t7-tests`, porta 55437, sem volume; reiniciar para retomar testes. Suíte T5 limpa tabelas: nunca apontar para dados reais.
-- **Domain limitations**: T3 não compensa meses anteriores; classificação T2 não separa quantidades parcialmente casadas em day trade. Reutilizados, não alterados pela T7.
+- **Feature**: mvp-consolidador / T7, processo tlc-spec-driven.
+- **Branch**: `feat/t7-integracao-mvp`; implementação inicial no commit `b8cbae5`.
+- **Completed**: implementação do núcleo T7; cenário de rollback corrigido com falha PostgreSQL controlada após autorização de continuidade.
+- **Validation**: validate_tasks, validate_spec e build passaram; 94 unitários e 60 testes de integração passaram (12 da T7); nenhum teste removido/pulado.
+- **Next step**: Verifier independente sobre `999df10..HEAD`, usando `t7-spec.md` e sensor com pelo menos 5 mutações em cópia isolada. Preservar relatório anterior da T6.
+- **Blockers**: nenhum; T7 aguarda verificação independente antes de conclusão final.
+- **Evidence**: `.specs/features/mvp-consolidador/t7-review.md`.
+- **Environment**: PostgreSQL temporário `fiscal-b3-t7-tests`, localhost:55437, usuário fiscal, banco fiscal_b3, sem volume e sem senha; somente teste. Python e Vitest exigem execução fora do sandbox neste ambiente.
+- **Scope**: quatro funções originais integradas; expansão T6 permanece no modo demo. Motores T2/T3 reutilizados com limitações documentadas em README.
